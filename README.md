@@ -40,3 +40,6 @@ The file `config.py` defines some options for the script:
 * `CORES_MODE_CHANGES` holds the possible sequences of core mode change
 * `CORES_NO_MIGRATION`, `CORES_MODEL_1`, etc. defines the configurations used to test the different models
 
+## Additions by [Mattia Bottaro](https://github.com/BottCode)
+
+For my master's degree project in CS, I have to compare an implementation, made by myself, of the ["Semi-partitioned model for *dual-core* mixed criticality system"](https://dl.acm.org/doi/10.1145/2834848.2834865) and [XtratuM](https://fentiss.com/products/hypervisor), which is a TSP. [Gabriele Pozzan](https://github.com/cornacchia)'s work, which concerns experiments on Semi-partitioned model [quad-core version](https://www.sciencedirect.com/science/article/abs/pii/S0164121219300020), is also partly useful to me, especially the parts of tasket generation, priority assignement and some RTAs. So I am adapting his work according to my needs.
