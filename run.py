@@ -5,6 +5,7 @@ from plot import plot_data
 from joblib import Parallel, delayed
 import config
 import copy
+import sys
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
@@ -25,6 +26,8 @@ def create_chart (results, x_label, y_label, filename):
 # Run one instance of the tests (this functions is necessary for parallelism)
 def run_instance (n, p, f, U):
   taskset = generate_taskset(n, p, f, U)
+  # print (taskset)
+  # sys.exit()
   taskset_utilization = calc_total_utilization(taskset)
   taskset_schedulability = [False, False, False, False]
   if config.CHECK_NO_MIGRATION and verify_no_migration(copy.deepcopy(taskset)):

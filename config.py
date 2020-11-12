@@ -29,7 +29,7 @@ ALWAYS_HI_CRIT = True
 NUMBER_OF_TESTS = 100
 
 # Results will be saved in RESULTS_DIR
-RESULTS_DIR = '/tmp/'
+RESULTS_DIR = './results/'
 
 # The following list contains the order in which the cores enter HI-crit mode
 # All the possible combinations are tested (in Model 3 a single core entering
