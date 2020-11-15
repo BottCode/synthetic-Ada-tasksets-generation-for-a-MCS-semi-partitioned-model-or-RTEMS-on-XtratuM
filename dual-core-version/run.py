@@ -55,6 +55,10 @@ def run_instance (n, p, f, U):
   # sys.exit()
   taskset_utilization = calc_total_utilization(taskset)
   taskset_schedulability = [False, False, False, False, False, False, False]
+
+  config.last_time_on_core_i = {'c1': [], 'c2': []}
+  config.last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
+
   if config.CHECK_NO_MIGRATION and verify_no_migration(copy.deepcopy(taskset)):
     taskset_schedulability[0] = True
     config.ID_CURRENT_SYSTEM += 1
@@ -63,7 +67,12 @@ def run_instance (n, p, f, U):
     select_bin_packing_algorithm("BEST_FIT_BP")
     T = copy.deepcopy(taskset)
     if verify_model_1(T):
-      # print("taskset schedulable with BF")
+      print("taskset schedulable with BF")
+      print("with no mig pri")
+      utils.print_taskset(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
+      print("with MIG pri")
+      utils.print_taskset(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
+      print("-----")
       # utils.print_taskset(T)
       taskset_schedulability[1] = True
       config.ID_CURRENT_SYSTEM += 1

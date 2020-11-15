@@ -31,7 +31,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 10
+NUMBER_OF_TESTS = 5
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
@@ -112,3 +112,6 @@ SYSTEM_MODEL = {
 }
 
 SYSTEMS_SCHEDULABLE_SEMI1BF = []
+
+last_time_on_core_i = {'c1': [], 'c2': []}
+last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
