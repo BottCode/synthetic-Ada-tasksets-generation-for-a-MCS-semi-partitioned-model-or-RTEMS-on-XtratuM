@@ -2,22 +2,22 @@ import multiprocessing
 
 # Set number of parallel jobs
 # Watchout: in dual-core version PARALLEL_JOBS must set to 1.
-PARALLEL_JOBS = multiprocessing.cpu_count()
+PARALLEL_JOBS = 1
 
 # Enable/disable models to check
-CHECK_NO_MIGRATION = True
+CHECK_NO_MIGRATION = False
 CHECK_SEMI_1_BF    = True
-CHECK_SEMI_1_FF    = True
-CHECK_SEMI_1_WF    = True
+CHECK_SEMI_1_FF    = False
+CHECK_SEMI_1_WF    = False
 CHECK_SEMI_2_WF    = False
 CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 # Enable/disable tests to run
 RUN_FIRST_TEST = True
-RUN_SECOND_TEST = True
-RUN_THIRD_TEST = True
-RUN_FOURTH_TEST = True
+RUN_SECOND_TEST = False
+RUN_THIRD_TEST = False
+RUN_FOURTH_TEST = False
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
@@ -31,7 +31,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 100
+NUMBER_OF_TESTS = 10
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
@@ -77,3 +77,38 @@ CORES_MODEL_1 = {
     ]
   }
 }
+
+ID_CURRENT_SYSTEM = 0
+
+SYSTEM_MODEL = {
+  'id': ID_CURRENT_SYSTEM,
+
+  'c1': {
+    # List of tasks scheduled on this core
+    'tasks': [],
+    # Flag to determine if the core was already considered for a particular
+    # task scheduling
+    'considered': False,
+    # Total utilization
+    'utilization': 0,
+    # Flag to indicate criticality change
+    'crit': False,
+    # Migration routes
+    'migration': [
+      ['c2']
+    ]
+  },
+
+  'c2': {
+    'tasks': [],
+    'considered': False,
+    'utilization': 0,
+    'crit': False,
+    'migration': [
+      ['c1']
+    ]
+  }
+
+}
+
+SYSTEMS_SCHEDULABLE_SEMI1BF = []

@@ -10,3 +10,8 @@ def sort_tasks_priority_c2 (t1, t2):
     return -1
   else:
     return 1
+
+def print_taskset (core, taskset):
+  print ("Core ", core)
+  for task in taskset:
+    print (task)

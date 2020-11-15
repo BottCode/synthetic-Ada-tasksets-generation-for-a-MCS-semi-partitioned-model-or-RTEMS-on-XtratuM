@@ -4,6 +4,34 @@ import copy
 import functools
 import config
 import utils
+import xml.etree.ElementTree as ET
+import xml.dom.minidom
+
+semi2bf_file = './XML_tasksets/semi2-BF.xml'
+
+# c1: tasks on core 1
+# c2: tasks on core 2
+def save_taskset_as_XML (c1, c2):
+  cores = [[], []]
+  utilizations = [[], []]
+  tasks = [[], []]
+
+  tree = ET.parse(semi2bf_file)
+  root = tree.getroot()
+  taskset_selector = ET.SubElement(root, 'taskset')
+  size = ET.SubElement(taskset_selector, 'size')
+  size.text = str(len(c1) + len(c2))
+
+  cores[0] = ET.SubElement(taskset_selector, 'core1')
+  cores[1] = ET.SubElement(taskset_selector, 'core2')
+
+  utilizations[0] = ET.SubElement(cores[0], 'utilization')
+  utilizations[1] = ET.SubElement(cores[1], 'utilization')
+
+  tasks[0] = ET.SubElement(cores[0], 'tasks') 
+  tasks[1] = ET.SubElement(cores[1], 'tasks')  
+
+  tree.write(semi2bf_file)
 
 # Reset "considered" flag on cores
 # This is invoked when a new task is selected for scheduling
@@ -212,6 +240,7 @@ def audsley (core, core_id, audsley_rta, side_effect):
     core['tasks'] = verification_tasks
   for task in verification_tasks:
     assert(task['P'][core_id] >= 0), 'Audsley OPA did not assign priority to some task'
+
   return True
 
 def verify_no_migration_task (task, cores):
@@ -233,12 +262,22 @@ def verify_no_migration_task (task, cores):
     verification_core = copy.deepcopy(cores[next_core])
     verification_core['tasks'].append(task)
     # Check core schedulability with Audsley's OPA
-    if audsley(verification_core, next_core, audsley_rta_no_migration, False):
+    if audsley(verification_core, next_core, audsley_rta_no_migration, True):
       cores[next_core]['tasks'] = verification_core['tasks']
       for task in cores[next_core]['tasks']:
-        assert (task['P'][next_core] < 0), 'No migration algorithm assigned side effect priority'
+        assert (task['P'][next_core] >= 0), 'No migration algorithm assigned side effect priority'
       cores[next_core]['utilization'] += task['U']
+      if len(cores['c1']['tasks']) + len(cores['c2']['tasks']) == 12:
+        print("assignement should be OVER!!")
+        save_taskset_as_XML(cores['c1']['tasks'], cores['c2']['tasks'])
+        utils.print_taskset('c1', cores['c1']['tasks'])
+        utils.print_taskset('c2', cores['c2']['tasks'])
+        print("---")
+      # system[next_core] = copy.deepcopy (cores[next_core])
       assigned = True
+ 
+    # utils.print_taskset('c1', cores['c1']['tasks'])
+    # utils.print_taskset('c2', cores['c2']['tasks'])
   return assigned
 
 # Calculate Ri(LO) (cfr. Equation 7 in Xu, Burns 2019)
@@ -449,19 +488,34 @@ def verify_mode_changes (cores):
         if not audsley(verification_cores[m_c], m_c, audsleyRiLO_1, True):
           return False
         for task in verification_cores[m_c]['tasks']:
-          assert (task['P'][m_c] >= 0), 'Side effects did no work for Ri(LO)_1'
+          assert (task['P'][m_c] >= 0), 'Side effects did not work for Ri(LO)_1'
+          # print(m_c, task)
+          # if m_c == 'c1':
+          #  print("task['P'][m_c]", task['P'][m_c], "", task['P']['c2'])
+          # else:
+          #  print("task['P'][m_c]", task['P'][m_c], "", task['P']['c1'])
 
       crit_count += 1
     for core_id in verification_cores:
-      # Verify 3rd crit core
+      # Verify 2nd crit core
       if core_id not in mode_change:
-        # RTA for new HI-crit cores after the boundary number is reached
+        # RTA for new HI-crit cores after the SAFE boundary number is reached
         # Calculate Ri(LO) and Ri(LO'), necessary for Ri(HI)
         if core_id not in migration_cores:
           audsley(verification_cores[core_id], core_id, audsley_rta_steady, True)
+          for task in verification_cores[core_id]['tasks']:
+            assert (task['P'][core_id] >= 0), "Side effect did not work"
+
         #audsley(verification_cores[core_id], core_id, audsleyRiLO_1, True)
         if not verifyRiHI_1(verification_cores[core_id], core_id):
           return False
+
+  if len(verification_cores['c1']['tasks']) + len(verification_cores['c2']['tasks']) == 12:
+    print("assignement should be OVER!!")
+    save_taskset_as_XML(cores['c1']['tasks'], cores['c2']['tasks'])
+    utils.print_taskset('c1', verification_cores['c1']['tasks'])
+    utils.print_taskset('c2', verification_cores['c2']['tasks'])
+    print("---")
   return True
 
 # This function applies Audsley's OPA to the steady mode
@@ -526,6 +580,7 @@ def verify_migration_task (task, cores):
     if audsley(verification_core, next_core, audsley_rta_steady, True):
       for task in verification_core['tasks']:
         assert(task['P'][next_core] >= 0), 'Side effects did not work for steady mode verification'
+
       # Tasks verified for steady mode, with priority and Ri(LO), C(LO), etc.
       # Get the LO-crit tasks, sorted by priority
       LO_crit_tasks = get_LO_crit_tasks(verification_core['tasks'], next_core)
@@ -554,11 +609,15 @@ def verify_migration_task (task, cores):
             cores[next_core]['utilization'] += task['U']
             break
         if assigned_migrating:
+          # print ("migrating: ", verification_task_mode)
           break
       if assigned_migrating:
         break
   if not assigned:
     return False
+
+    # utils.print_taskset('c1', cores['c1']['tasks'])
+    # utils.print_taskset('c2', cores['c2']['tasks'])
   return True
 
 def reset_all_priorities (cores):
@@ -585,6 +644,8 @@ def verify_no_migration (taskset):
 
 def verify_model_1 (taskset):
   cores = copy.deepcopy(config.CORES_MODEL_1)
+  # system = copy.deepcopy(config.SYSTEM_MODEL)
+
   for task in taskset:
     reset_all_priorities(cores)
     # Attempt assigning with no migration
@@ -592,6 +653,7 @@ def verify_model_1 (taskset):
       # Otherwise attempt migration
       if task['HI'] or not verify_migration_task(task, cores):
         return False
+
   scheduled_tasks = 0
   for c in cores:
     scheduled_tasks += len(cores[c]['tasks'])

@@ -6,6 +6,7 @@ from joblib import Parallel, delayed
 import config
 import copy
 import sys
+import utils
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
@@ -49,42 +50,68 @@ def select_bin_packing_algorithm (selection):
 
 # Run one instance of the tests (this functions is necessary for parallelism)
 def run_instance (n, p, f, U):
+  print("taskset: ", n, p, f, U)
   taskset = generate_taskset(n, p, f, U)
   # sys.exit()
   taskset_utilization = calc_total_utilization(taskset)
   taskset_schedulability = [False, False, False, False, False, False, False]
   if config.CHECK_NO_MIGRATION and verify_no_migration(copy.deepcopy(taskset)):
     taskset_schedulability[0] = True
+    config.ID_CURRENT_SYSTEM += 1
 
   if config.CHECK_SEMI_1_BF:
     select_bin_packing_algorithm("BEST_FIT_BP")
-    if verify_model_1(copy.deepcopy(taskset)):
+    T = copy.deepcopy(taskset)
+    if verify_model_1(T):
+      # print("taskset schedulable with BF")
+      # utils.print_taskset(T)
       taskset_schedulability[1] = True
+      config.ID_CURRENT_SYSTEM += 1
   
-  if config.CHECK_SEMI_1_FF and verify_model_1(copy.deepcopy(taskset)):
+  if config.CHECK_SEMI_1_FF:
     select_bin_packing_algorithm("FIRST_FIT_BP")
-    if verify_model_1(copy.deepcopy(taskset)):
+    T = copy.deepcopy(taskset)
+    if verify_model_1(T):
+      # print("taskset schedulable with FF")
+      # utils.print_taskset(T)
       taskset_schedulability[2] = True
+      config.ID_CURRENT_SYSTEM += 1
   
-  if config.CHECK_SEMI_1_WF and verify_model_1(copy.deepcopy(taskset)):
+  if config.CHECK_SEMI_1_WF:
     select_bin_packing_algorithm("WORST_FIT_BP")
-    if verify_model_1(copy.deepcopy(taskset)):
+    T = copy.deepcopy(taskset)
+    if verify_model_1(T):
+      # print("taskset schedulable with WF")
+      # utils.print_taskset(T)
       taskset_schedulability[3] = True
+      config.ID_CURRENT_SYSTEM += 1
   
-  if config.CHECK_SEMI_2_BF and verify_model_1(copy.deepcopy(taskset)):
+  if config.CHECK_SEMI_2_BF:
     select_bin_packing_algorithm("BEST_FIT_BP")
-    if verify_model_1(copy.deepcopy(taskset)):
+    T = copy.deepcopy(taskset)
+    if verify_model_1(T):
+      # print("taskset schedulable with BF")
+      # print(T)
       taskset_schedulability[4] = True
+      config.ID_CURRENT_SYSTEM += 1
   
-  if config.CHECK_SEMI_2_FF and verify_model_1(copy.deepcopy(taskset)):
-    select_bin_packing_algorithm("FIRST_FIT_BP")
-    if verify_model_1(copy.deepcopy(taskset)):
+  if config.CHECK_SEMI_2_FF:
+    select_bin_packing_algorithm("FF")
+    T = copy.deepcopy(taskset)
+    if verify_model_1(T):
+      # print("taskset schedulable with BEST_FIT_BP")
+      # print(T)
       taskset_schedulability[5] = True
+      config.ID_CURRENT_SYSTEM += 1
   
-  if config.CHECK_SEMI_2_WF and verify_model_1(copy.deepcopy(taskset)):
+  if config.CHECK_SEMI_2_WF:
     select_bin_packing_algorithm("WORST_FIT_BP")
-    if verify_model_1(copy.deepcopy(taskset)):
+    T = copy.deepcopy(taskset)
+    if verify_model_1(T):
+      # print("taskset schedulable with WF")
+      # print(T)
       taskset_schedulability[6] = True
+      config.ID_CURRENT_SYSTEM += 1
   
   return taskset_schedulability, taskset_utilization
 
@@ -108,7 +135,7 @@ def run_first_test ():
     # res_local[5] is SEMI-2 FF
     # res_local[6] is SEMI-2 WF
     res_local = [[U, 0], [U, 0], [U, 0], [U, 0]]
-    results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(24, 0.5, 2, U) for _ in range(config.NUMBER_OF_TESTS))
+    results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(12, 0.5, 2, U) for _ in range(config.NUMBER_OF_TESTS))
     for result in results:
       for i in range(4):
         if result[0][i]:
@@ -154,7 +181,7 @@ def run_second_test ():
   f_step = 0.25
   second_test_bar = Bar('Second test', max=11)
   while f <= finish_f:
-    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(24, 0.5, f)
+    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, 0.5, f)
     for i in range(4):
       res_global[i].append([f, total_schedulable_utilizations[i] / total_utilizations])
     f += f_step
@@ -170,7 +197,7 @@ def run_third_test ():
   p_step = 0.1
   third_test_bar = Bar('Third test', max=9)
   while p <= finish_p:
-    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(24, p, 2)
+    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, p, 2)
     for i in range(4):
       res_global[i].append([p, total_schedulable_utilizations[i] / total_utilizations])
     p += p_step
