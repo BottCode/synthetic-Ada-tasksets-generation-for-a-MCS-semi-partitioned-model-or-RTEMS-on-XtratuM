@@ -67,10 +67,12 @@ def run_instance (n, p, f, U):
     select_bin_packing_algorithm("BEST_FIT_BP")
     T = copy.deepcopy(taskset)
     if verify_model_1(T):
+      # utils.check_size_taskset_with_mig(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'], n)
       print("taskset schedulable with BF")
       print("with no mig pri")
       utils.print_taskset(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
       print("with MIG pri")
+      print(config.where_last_mod_mig)
       utils.print_taskset(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
       print("-----")
       # utils.print_taskset(T)

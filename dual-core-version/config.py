@@ -14,9 +14,9 @@ CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 # Enable/disable tests to run
-RUN_FIRST_TEST = True
+RUN_FIRST_TEST = False
 RUN_SECOND_TEST = False
-RUN_THIRD_TEST = False
+RUN_THIRD_TEST = True
 RUN_FOURTH_TEST = False
 
 # Select bin-packing algorithm to use
@@ -31,7 +31,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 5
+NUMBER_OF_TESTS = 100
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
@@ -115,3 +115,4 @@ SYSTEMS_SCHEDULABLE_SEMI1BF = []
 
 last_time_on_core_i = {'c1': [], 'c2': []}
 last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
+where_last_mod_mig = ""
