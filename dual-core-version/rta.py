@@ -43,14 +43,9 @@ def reset_considered (cores):
 # Implements the first fit bin-packing algorithm
 # To use it set config.FIRST_FIT_BP to True
 def first_fit_bin_packing (task, cores):
-  print("New invok")
   for c in cores:
     core = cores[c]
-    print("coresU: ", cores['c1']['utilization'], cores['c2']['utilization'])
-    #print("new T: ", core['utilization'], "+", task['U'], "=", core['utilization']+task['U'])
-    print("Tu:", task['U'])
     if not core['considered'] and core['utilization'] + task['U'] <= 1:
-      print("Above ok")
       return c
   return None
 
@@ -58,11 +53,9 @@ def first_fit_bin_packing (task, cores):
 # To use it set config.WORST_FIT_BP to True
 def worst_fit_bin_packing (task, cores):
   min_utilization = 1
-  print("CoresU: ",cores['c1']['utilization'], cores['c2']['utilization'], "taskU: ", task['U'])
   result = None
   for c in cores:
     core = cores[c]
-    print("Tot: ", core['utilization'] + task['U'])
     if not core['considered'] and core['utilization'] < min_utilization:
       result = c
       min_utilization = core['utilization']
@@ -76,11 +69,8 @@ def best_fit_bin_packing (task, cores):
   result = None
   for c in cores:
     core = cores[c]
-    print("coresU: ", cores['c1']['utilization'], "+", cores['c2']['utilization'], "=", cores['c1']['utilization'] + cores['c2']['utilization'])
-    print("new T: ", core['utilization'], "+", task['U'], "=", core['utilization']+task['U'])
     # if not core['considered'] and core['utilization'] + task['U'] >= max_utilization and core['utilization'] + task['U'] <= 1:
     if not core['considered'] and core['utilization'] > max_utilization:
-      print("Above ok")
       result = c
       max_utilization = core['utilization']
   return result
@@ -295,6 +285,7 @@ def verify_RTA_migration (cores, hi_crit_core_id, migration_core_id):
 
   for task in verification_cores[migration_core_id]['tasks']:
     assert (task['P'][migration_core_id] >= 0), 'Side effects did not work for Ri(LO)_1'
+  config.last_time_on_core_i_with_additional_migrating_task[migration_core_id] = verification_cores[migration_core_id]['tasks']
 
   # Verify 2nd crit core
   # RTA for new HI-crit cores after the SAFE boundary number is reached
@@ -305,8 +296,8 @@ def verify_RTA_migration (cores, hi_crit_core_id, migration_core_id):
   
   if not verifyRiHI_1(verification_cores[migration_core_id], migration_core_id):
     return False
-  config.where_last_mod_mig = "RTA mig"
-  config.last_time_on_core_i_with_additional_migrating_task[migration_core_id] = verification_cores[migration_core_id]['tasks']
+  # config.where_last_mod_mig = "RTA mig"
+  # config.last_time_on_core_i_with_additional_migrating_task[migration_core_id] = verification_cores[migration_core_id]['tasks']
   return True
 
 # is_last_task: True iff task is the last one that we are checking. If this task is schedulable,
@@ -324,7 +315,6 @@ def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
     assert (next_core not in considered_cores), 'Picked the same core 2 times'
     considered_cores.append(next_core)
     if next_core is None:
-      print("shit!")
       return False
     cores[next_core]['considered'] = True
     # Always clone cores to avoid side effects
@@ -348,7 +338,6 @@ def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
       cores[next_core]['utilization'] += task['U']
 
       if not (is_no_migration_algo) and not (verify_RTA_migration(cores, other_core, next_core)):
-        print("here")
         cores[next_core]['tasks'] = copy.deepcopy(backup_tasks)
         cores[next_core]['utilization'] = copy.deepcopy(backup_U)
         return False
@@ -559,9 +548,6 @@ def verify_mode_changes (cores, is_last_task):
       if not verify_RiMIX(verification_cores[crit_core], crit_core):
         return False
       # config.last_time_on_core_i[crit_core] = verification_cores[crit_core]['tasks']
-      # if is_last_task:
-        # print("Ok RTA for new HI-crit core")
-        #utils. print_taskset(verification_cores['c1']['tasks'], verification_cores['c2']['tasks'])
       # Remove migrated tasks from HI-crit core
       # This is done to test future interferences
       verification_cores[crit_core]['tasks'] = new_crit_core_tasks
@@ -576,18 +562,10 @@ def verify_mode_changes (cores, is_last_task):
         tasks_aux = verification_cores[m_c]['tasks']
         config.where_last_mod_mig = "mode change"
         config.last_time_on_core_i_with_additional_migrating_task[m_c] = verification_cores[m_c]['tasks']
-        # if is_last_task:
-          # print("Ok RTA for cores which receive migrated tasks")
-          #utils. print_taskset(verification_cores['c1']['tasks'], verification_cores['c2']['tasks'])
         
         for task in verification_cores[m_c]['tasks']:
           assert (task['P'][m_c] >= 0), 'Side effects did not work for Ri(LO)_1'
-          # # print(m_c, task)
-          # if m_c == 'c1':
-          #  # print("task['P'][m_c]", task['P'][m_c], "", task['P']['c2'])
-          # else:
-          #  # print("task['P'][m_c]", task['P'][m_c], "", task['P']['c1'])
-
+          
       crit_count += 1
     for core_id in verification_cores:
       # Verify 2nd crit core
@@ -610,12 +588,6 @@ def verify_mode_changes (cores, is_last_task):
           # print("Ok RTA for new HI-crit cores after the SAFE boundary number is reached")
           #utils. print_taskset(verification_cores['c1']['tasks'], verification_cores['c2']['tasks'])
 
-  '''if len(verification_cores['c1']['tasks']) + len(verification_cores['c2']['tasks']) == 12:
-    # print("assignement should be OVER!!")
-    save_taskset_as_XML(cores['c1']['tasks'], cores['c2']['tasks'])
-    #utils. print_taskset('c1', verification_cores['c1']['tasks'])
-    #utils. print_taskset('c2', verification_cores['c2']['tasks'])
-    # print("---")'''
   return True
 
 # This function applies Audsley's OPA to the steady mode
@@ -671,7 +643,6 @@ def verify_migration_task (task, cores, is_last_task, fetched_approach):
     assert (next_core not in considered_cores), 'Picked the same core 2 times'
     considered_cores.append(next_core)
     if next_core is None:
-      print("shit!")
       return False
     cores[next_core]['considered'] = True
     # Always clone cores and tasks to avoid side effects
@@ -683,11 +654,8 @@ def verify_migration_task (task, cores, is_last_task, fetched_approach):
     verification_core['tasks'].append(verification_task)
     # Check steady mode
     if audsley(verification_core, next_core, audsley_rta_steady, True, is_last_task):
-      config.last_time_on_core_i[next_core] = verification_core['tasks']
-      # if is_last_task:
-        # print("Ok RTA for steady mode")
-        #utils. print_taskset(verification_cores['c1']['tasks'], verification_cores['c2']['tasks'])
-
+      # config.last_time_on_core_i[next_core] = verification_core['tasks']
+      
       for task in verification_core['tasks']:
         assert(task['P'][next_core] >= 0), 'Side effects did not work for steady mode verification'
 
@@ -718,9 +686,12 @@ def verify_migration_task (task, cores, is_last_task, fetched_approach):
             cores[next_core]['tasks'] = verification_cores_mode[next_core]['tasks']
             # config.last_time_on_core_i_with_additional_migrating_task[next_core] = verification_cores_mode[next_core]['tasks']
             cores[next_core]['utilization'] += task['U']
-            for t in config.last_time_on_core_i[next_core]:
-              if t['ID'] == verification_task_mode['ID']:
-                t['migrating'] = True
+            for t in config.last_time_on_core_i_with_additional_migrating_task[next_core]:
+              if t['migrating']:
+                for t2 in config.last_time_on_core_i[next_core]:
+                  if t['ID'] == t2['ID']:
+                    t2['migrating'] = True
+                    break
                 break
             break
       else:
@@ -764,7 +735,6 @@ def verify_migration_task (task, cores, is_last_task, fetched_approach):
   return True
 
 def reset_all_priorities (cores):
-  # print ("reset_all_priorities")
   for c in cores:
     core = cores[c]
     for task in core['tasks']:
@@ -790,10 +760,10 @@ def verify_no_migration (taskset, is_no_migration_algo):
 def verify_model_1 (taskset, fetched_approach):
   i = 1
   config.where_last_mod_mig = ""
-  # print(len(taskset))
+  config.last_time_on_core_i = {'c1': [], 'c2': []}
+  config.last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
   is_last_task = False
   cores = copy.deepcopy(config.CORES_MODEL_1)
-  print("cores :", cores)
   # system = copy.deepcopy(config.SYSTEM_MODEL)
 
   for task in taskset:
