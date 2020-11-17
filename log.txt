@@ -1,3 +1,0 @@
->>> Running first test
-Result saved: ./results/result_1.png
->>> Running second test

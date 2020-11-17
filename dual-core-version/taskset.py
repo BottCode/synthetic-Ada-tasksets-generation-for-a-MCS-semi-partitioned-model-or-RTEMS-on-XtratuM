@@ -53,10 +53,15 @@ def generate_taskset (n, p, f, maxU):
   HI_tot = n * p
   LO_tot = n - HI_tot
   U = UUnifast_discard(n, maxU)
+  sumU = 0
+  for u in U:
+    sumU += u
+  print("UTIL:", sumU)
   T = log_uniform(n)
   taskset = []
   for i in range(n):
     new_task = {
+      'ID': i,
       # Is this task HI-crit?
       'HI': False,
       # HI-crit WCET

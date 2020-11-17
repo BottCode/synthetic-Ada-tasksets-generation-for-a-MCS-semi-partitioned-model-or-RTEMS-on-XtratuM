@@ -18,12 +18,12 @@ def create_chart (results, x_label, y_label, filename):
     data_to_plot.append({'label': 'SEMI-1 FF', 'data': results[2]})
   if config.CHECK_SEMI_1_WF:
     data_to_plot.append({'label': 'SEMI-1 WF', 'data': results[3]})
-  if config.CHECK_SEMI_2_WF:
-    data_to_plot.append({'label': 'SEMI-2 WF', 'data': results[4]})
+  if config.CHECK_SEMI_2_BF:
+    data_to_plot.append({'label': 'SEMI-2 BF', 'data': results[4]})
   if config.CHECK_SEMI_2_FF:
     data_to_plot.append({'label': 'SEMI-2 FF', 'data': results[5]})
-  if config.CHECK_SEMI_2_BF: 
-    data_to_plot.append({'label': 'SEMI-2 BF', 'data': results[6]})
+  if config.CHECK_SEMI_2_WF: 
+    data_to_plot.append({'label': 'SEMI-2 WF', 'data': results[6]})
 
   plot_data(
     data_to_plot,
@@ -33,17 +33,17 @@ def create_chart (results, x_label, y_label, filename):
 
 def select_bin_packing_algorithm (selection):
   if selection == "FIRST_FIT_BP":
-    config.FIRST_FIT_BP = True;
-    config.BEST_FIT_BP  = False;
-    config.WORST_FIT_BP = False;
+    config.FIRST_FIT_BP = True
+    config.BEST_FIT_BP  = False
+    config.WORST_FIT_BP = False
   elif selection == "WORST_FIT_BP":
-    config.FIRST_FIT_BP = False;
-    config.BEST_FIT_BP  = False;
-    config.WORST_FIT_BP = True;
+    config.FIRST_FIT_BP = False
+    config.BEST_FIT_BP  = False
+    config.WORST_FIT_BP = True
   elif selection == "BEST_FIT_BP":
-    config.FIRST_FIT_BP = False;
-    config.BEST_FIT_BP  = True;
-    config.WORST_FIT_BP = False;
+    config.FIRST_FIT_BP = False
+    config.BEST_FIT_BP  = True
+    config.WORST_FIT_BP = False
   else:
     print('!!! ERROR: No bin-packing algorithm selected !!!')
     sys.exit()
@@ -54,20 +54,29 @@ def run_instance (n, p, f, U):
   taskset = generate_taskset(n, p, f, U)
   # sys.exit()
   taskset_utilization = calc_total_utilization(taskset)
-  taskset_schedulability = [False, False, False, False, False, False, False]
+  sumU = 0
+  for task in taskset:
+    sumU += task['U']
+  print("UT: ", taskset_utilization, " vs ", U, "=>", sumU)
+
+  taskset_schedulability = []
+  for _ in range(config.NUMBER_OF_APPROACHES):
+    taskset_schedulability.append(False)
 
   config.last_time_on_core_i = {'c1': [], 'c2': []}
   config.last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
 
-  if config.CHECK_NO_MIGRATION and verify_no_migration(copy.deepcopy(taskset)):
-    taskset_schedulability[0] = True
-    config.ID_CURRENT_SYSTEM += 1
+  if config.CHECK_NO_MIGRATION:
+    select_bin_packing_algorithm("BEST_FIT_BP")
+    if verify_no_migration(copy.deepcopy(taskset), True):
+      print("Schedulable without migration")
+      taskset_schedulability[0] = True
 
+  fetched_approach = True
   if config.CHECK_SEMI_1_BF:
     select_bin_packing_algorithm("BEST_FIT_BP")
-    T = copy.deepcopy(taskset)
-    if verify_model_1(T):
-      # utils.check_size_taskset_with_mig(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'], n)
+    if verify_model_1(copy.deepcopy(taskset), fetched_approach):
+      '''utils.check_size_taskset_with_mig(n)
       print("taskset schedulable with BF")
       print("with no mig pri")
       utils.print_taskset(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
@@ -75,60 +84,68 @@ def run_instance (n, p, f, U):
       print(config.where_last_mod_mig)
       utils.print_taskset(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
       print("-----")
-      # utils.print_taskset(T)
+      # utils.print_taskset(T)'''
       taskset_schedulability[1] = True
-      config.ID_CURRENT_SYSTEM += 1
+      print("Schedulable with semi1 BF")
   
   if config.CHECK_SEMI_1_FF:
     select_bin_packing_algorithm("FIRST_FIT_BP")
-    T = copy.deepcopy(taskset)
-    if verify_model_1(T):
+    
+    if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       # print("taskset schedulable with FF")
       # utils.print_taskset(T)
       taskset_schedulability[2] = True
-      config.ID_CURRENT_SYSTEM += 1
+      print("Schedulable with semi1 FF")
+      print("with no mig pri")
+      utils.print_taskset(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
+      print("with MIG pri")
+      print(config.where_last_mod_mig)
+      utils.print_taskset(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
+      print("-----")
   
   if config.CHECK_SEMI_1_WF:
     select_bin_packing_algorithm("WORST_FIT_BP")
-    T = copy.deepcopy(taskset)
-    if verify_model_1(T):
+    
+    if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       # print("taskset schedulable with WF")
       # utils.print_taskset(T)
       taskset_schedulability[3] = True
-      config.ID_CURRENT_SYSTEM += 1
+      print("Schedulable with semi1 WF")
   
+  fetched_approach = False
   if config.CHECK_SEMI_2_BF:
     select_bin_packing_algorithm("BEST_FIT_BP")
-    T = copy.deepcopy(taskset)
-    if verify_model_1(T):
+    
+    if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       # print("taskset schedulable with BF")
       # print(T)
       taskset_schedulability[4] = True
-      config.ID_CURRENT_SYSTEM += 1
+      print("Schedulable with semi2 BF")
   
   if config.CHECK_SEMI_2_FF:
-    select_bin_packing_algorithm("FF")
-    T = copy.deepcopy(taskset)
-    if verify_model_1(T):
+    select_bin_packing_algorithm("FIRST_FIT_BP")
+    
+    if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       # print("taskset schedulable with BEST_FIT_BP")
       # print(T)
       taskset_schedulability[5] = True
-      config.ID_CURRENT_SYSTEM += 1
+      print("Schedulable with semi2 FF")
   
   if config.CHECK_SEMI_2_WF:
     select_bin_packing_algorithm("WORST_FIT_BP")
-    T = copy.deepcopy(taskset)
-    if verify_model_1(T):
-      # print("taskset schedulable with WF")
-      # print(T)
+    
+    if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[6] = True
-      config.ID_CURRENT_SYSTEM += 1
+      print("Schedulable with semi2 WF")
   
   return taskset_schedulability, taskset_utilization
 
 # First test: check percentage of schedulable tasksets with different utilizations
 def run_first_test ():
-  res_global = [[], [], [], []]
+  res_global = []
+  for _ in range(config.NUMBER_OF_APPROACHES):
+    res_global.append([])
+
   # Starting and final utilization values
   U = 1.6
   finish_U = 2.2
@@ -145,14 +162,18 @@ def run_first_test ():
     # res_local[4] is SEMI-2 BF
     # res_local[5] is SEMI-2 FF
     # res_local[6] is SEMI-2 WF
-    res_local = [[U, 0], [U, 0], [U, 0], [U, 0]]
+    res_local = []
+    for _ in range(config.NUMBER_OF_APPROACHES):
+      res_local.append([U,0])
+
     results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(12, 0.5, 2, U) for _ in range(config.NUMBER_OF_TESTS))
     for result in results:
-      for i in range(4):
+      print("r:",result)
+      for i in range(config.NUMBER_OF_APPROACHES):
         if result[0][i]:
           res_local[i][1] += 1
   
-    for i in range(4):
+    for i in range(config.NUMBER_OF_APPROACHES):
       res_local[i][1] = res_local[i][1] * 100 / config.NUMBER_OF_TESTS
       res_global[i].append(res_local[i])
 
@@ -169,7 +190,9 @@ def check_utilization_total_schedulability (n, p, f):
   # Keep track of the sum of all tasksets' utilizations
   total_utilizations = 0
   # Keep track of the sum of schedulable tasksets' utilizations (for every model)
-  total_schedulable_utilizations = [0, 0, 0, 0]
+  total_schedulable_utilizations = []
+  for _ in range(config.NUMBER_OF_APPROACHES):
+    total_schedulable_utilizations.append(0)
   # Starting utilization value
   U = 1.6
   # Utilization step
@@ -177,7 +200,7 @@ def check_utilization_total_schedulability (n, p, f):
   while U <= 2.2:
     results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(n, p, f, U) for _ in range(config.NUMBER_OF_TESTS))
     for result in results:
-      for i in range(4):
+      for i in range(config.NUMBER_OF_APPROACHES):
         if result[0][i]:
           total_schedulable_utilizations[i] += result[1]
       total_utilizations += result[1]
@@ -185,7 +208,9 @@ def check_utilization_total_schedulability (n, p, f):
   return total_utilizations, total_schedulable_utilizations
 
 def run_second_test ():
-  res_global = [[], [], [], [], [], [], []]
+  res_global = []
+  for _ in range(config.NUMBER_OF_APPROACHES):
+    res_global.append([])
   # Starting and final Criticality Factor values
   f = 1.25
   finish_f = 4
@@ -193,7 +218,7 @@ def run_second_test ():
   second_test_bar = Bar('Second test', max=11)
   while f <= finish_f:
     total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, 0.5, f)
-    for i in range(4):
+    for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([f, total_schedulable_utilizations[i] / total_utilizations])
     f += f_step
     second_test_bar.next()
@@ -201,7 +226,9 @@ def run_second_test ():
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
 
 def run_third_test ():
-  res_global = [[], [], [], [], [], [], []]
+  res_global = []
+  for _ in range(config.NUMBER_OF_APPROACHES):
+    res_global.append([])
   # Starting and final Proportion of HI-crit tasks values
   p = 0.1
   finish_p = 0.9
@@ -209,7 +236,7 @@ def run_third_test ():
   third_test_bar = Bar('Third test', max=9)
   while p <= finish_p:
     total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, p, 2)
-    for i in range(4):
+    for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([p, total_schedulable_utilizations[i] / total_utilizations])
     p += p_step
     third_test_bar.next()
@@ -217,13 +244,15 @@ def run_third_test ():
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
 
 def run_fourth_test ():
-  res_global = [[], [], [], [], [], [], []]
+  res_global = []
+  for _ in range(config.NUMBER_OF_APPROACHES):
+    res_global.append([])
   # Taskset sizes
   sizes = [8, 10, 12, 15, 20, 25, 30, 35]
   fourth_test_bar = Bar('Fourth test', max=8)
   for size in sizes:
     total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(size, 0.5, 2)
-    for i in range(4):
+    for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([size, total_schedulable_utilizations[i] / total_utilizations])
     fourth_test_bar.next()
   fourth_test_bar.finish()

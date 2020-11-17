@@ -15,9 +15,13 @@ def reset_considered (cores):
 # Implements the first fit bin-packing algorithm
 # To use it set config.FIRST_FIT_BP to True
 def first_fit_bin_packing (task, cores):
+  print("New invok")
   for c in cores:
     core = cores[c]
+    print("coresU: ", cores['c1']['utilization'] + cores['c2']['utilization'] + cores['c3']['utilization'] + cores['c4']['utilization'])
+    print("new T: ", core['utilization'], "+", task['U'], "=", core['utilization']+task['U'])
     if not core['considered'] and core['utilization'] + task['U'] <= 1:
+      print("Above ok")
       return c
   return None
 

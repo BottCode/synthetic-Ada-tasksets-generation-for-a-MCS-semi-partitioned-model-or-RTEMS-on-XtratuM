@@ -43,38 +43,57 @@ def reset_considered (cores):
 # Implements the first fit bin-packing algorithm
 # To use it set config.FIRST_FIT_BP to True
 def first_fit_bin_packing (task, cores):
+  print("New invok")
   for c in cores:
     core = cores[c]
+    print("coresU: ", cores['c1']['utilization'], cores['c2']['utilization'])
+    #print("new T: ", core['utilization'], "+", task['U'], "=", core['utilization']+task['U'])
+    print("Tu:", task['U'])
     if not core['considered'] and core['utilization'] + task['U'] <= 1:
+      print("Above ok")
       return c
   return None
 
+# Implements the first fit bin-packing algorithm
+# To use it set config.WORST_FIT_BP to True
+def worst_fit_bin_packing (task, cores):
+  min_utilization = 1
+  print("CoresU: ",cores['c1']['utilization'], cores['c2']['utilization'], "taskU: ", task['U'])
+  result = None
+  for c in cores:
+    core = cores[c]
+    print("Tot: ", core['utilization'] + task['U'])
+    if not core['considered'] and core['utilization'] < min_utilization:
+      result = c
+      min_utilization = core['utilization']
+  return result
+
+
 # Implements the best fit bin-packing algorithm
 # To use it set config.BEST_FIT_BP to True
-
 def best_fit_bin_packing (task, cores):
   max_utilization = -1
   result = None
   for c in cores:
     core = cores[c]
+    print("coresU: ", cores['c1']['utilization'], "+", cores['c2']['utilization'], "=", cores['c1']['utilization'] + cores['c2']['utilization'])
+    print("new T: ", core['utilization'], "+", task['U'], "=", core['utilization']+task['U'])
     # if not core['considered'] and core['utilization'] + task['U'] >= max_utilization and core['utilization'] + task['U'] <= 1:
     if not core['considered'] and core['utilization'] > max_utilization:
+      print("Above ok")
       result = c
       max_utilization = core['utilization']
   return result
-
-# Implements the worst fit bin-packing algorithm
-# To use it set config.WORST_FIT_BP to True
-def worst_fit_bin_packing (task, cores):
-  min_utilization = 1
+  '''  max_utilization = -1
   result = None
   for c in cores:
     core = cores[c]
-    # if not core['considered'] and core['utilization'] + task['U'] <= min_utilization and core['utilization'] + task['U'] <= 1:
-    if not core['considered'] and core['utilization'] < min_utilization:
+    # if not core['considered'] and core['utilization'] + task['U'] >= max_utilization and core['utilization'] + task['U'] <= 1:
+    new_U = core['utilization'] + task['U']
+    if not core['considered'] and new_U > max_utilization and new_U <= 1:
       result = c
-      min_utilization = core['utilization']
-  return result
+      max_utilization = core['utilization']
+  return result'''
 
 # Get the next core to check according to the algorithm specified in the config
 def get_next_core (task, cores):
@@ -85,7 +104,7 @@ def get_next_core (task, cores):
   elif config.BEST_FIT_BP:
     return best_fit_bin_packing(task, cores)
   else:
-    # print('!!! ERROR: No bin-packing algorithm selected !!!')
+    print('!!! ERROR: No bin-packing algorithm selected !!!')
     sys.exit()
 
 # Find tasks with priority greater than Ti's (= tasks[i]) priority
@@ -202,8 +221,6 @@ def clear_priorities (tasks, core_id):
 # core_id -> core identifier
 # audsley_rta -> RTA algorithm to use (no migration, Ri(LO), Ri(HI), etc.)
 # side_effect -> Should the priorities assigned during this step be saved?
-# is_last_task: True iff task is the last one that we are checking. If this task is schedulable,
-# then so is the whole systems.
 def audsley (core, core_id, audsley_rta, side_effect, is_last_task):
   # One priority for each task
   priority_levels = len(core['tasks'])
@@ -244,24 +261,8 @@ def audsley (core, core_id, audsley_rta, side_effect, is_last_task):
   else:
     config.last_time_on_core_i[core_id] = verification_tasks
 
-  # print("audsley on core", core_id)
   for task in verification_tasks:
     assert(task['P'][core_id] >= 0), 'Audsley OPA did not assign priority to some task'
-    # print(task)
-
-  # sometimes (when audsley is called by verify_no_migration), side_effect is not desiderable.
-  # However, if the current task is the last one, we need to # print the priority assignements.
-  '''if is_last_task and not side_effect:
-    # print("Ok RTA for no migration", core_id)
-    if core_id == 'c1':
-      #utils. print_taskset(verification_tasks, [])
-    elif core_id == 'c2':
-      #utils. print_taskset([], verification_tasks)'''
-  
-  # if is_last_task:
-    # print("We have finished!")
-    #utils. print_taskset(config.last_time_on_c1, config.last_time_on_c2)
-
 
   return True
 
@@ -310,7 +311,7 @@ def verify_RTA_migration (cores, hi_crit_core_id, migration_core_id):
 
 # is_last_task: True iff task is the last one that we are checking. If this task is schedulable,
 # then so is the whole systems.
-def verify_no_migration_task (task, cores, is_last_task):
+def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
   # Cleanup "considered" flag on cores to start fresh for the new task
   reset_considered(cores)
   assigned = False
@@ -323,6 +324,7 @@ def verify_no_migration_task (task, cores, is_last_task):
     assert (next_core not in considered_cores), 'Picked the same core 2 times'
     considered_cores.append(next_core)
     if next_core is None:
+      print("shit!")
       return False
     cores[next_core]['considered'] = True
     # Always clone cores to avoid side effects
@@ -330,44 +332,28 @@ def verify_no_migration_task (task, cores, is_last_task):
     verification_core = copy.deepcopy(cores[next_core])
     verification_core['tasks'].append(task)
     # Check core schedulability with Audsley's OPA
-    # if is_last_task:
-      # print ("scheduling last task")
+
     if next_core == 'c1':
       other_core = 'c2'
     elif next_core == 'c2':
       other_core = 'c1'
 
-    backup_tasks = cores[next_core]['tasks']
-    backup_U = cores[next_core]['utilization']
-    if audsley(verification_core, next_core, audsley_rta_no_migration, False, is_last_task):
-      # if is_last_task:
-        # if next_core == 'c1':
-          #utils. print_taskset([], cores['c2']['tasks'])
-        # elif next_core == 'c2':
-          #utils. print_taskset(cores['c1']['tasks'], [])
+    backup_tasks = copy.deepcopy(cores[next_core]['tasks'])
+    backup_U = copy.deepcopy(cores[next_core]['utilization'])
 
+    if audsley(verification_core, next_core, audsley_rta_no_migration, False, is_last_task):
       cores[next_core]['tasks'] = verification_core['tasks']
       for task in cores[next_core]['tasks']:
         assert (task['P'][next_core] < 0), 'No migration algorithm assigned side effect priority'
-        cores[next_core]['utilization'] += task['U']
-      if not verify_RTA_migration(cores, other_core, next_core):
-        cores[next_core]['tasks'] = backup_tasks
-        cores[next_core]['utilization'] = backup_U
+      cores[next_core]['utilization'] += task['U']
+
+      if not (is_no_migration_algo) and not (verify_RTA_migration(cores, other_core, next_core)):
+        print("here")
+        cores[next_core]['tasks'] = copy.deepcopy(backup_tasks)
+        cores[next_core]['utilization'] = copy.deepcopy(backup_U)
         return False
-
-
-      '''if len(cores['c1']['tasks']) + len(cores['c2']['tasks']) == 12:
-        # print("assignement should be OVER!!")
-        save_taskset_as_XML(cores['c1']['tasks'], cores['c2']['tasks'])
-        #utils. print_taskset('c1', cores['c1']['tasks'])
-        #utils. print_taskset('c2', cores['c2']['tasks'])
-        # print("---")'''
-      # system[next_core] = copy.deepcopy (cores[next_core])
-
       assigned = True
- 
-    # #utils. print_taskset('c1', cores['c1']['tasks'])
-    # #utils. print_taskset('c2', cores['c2']['tasks'])
+
   return assigned
 
 # Calculate Ri(LO) (cfr. Equation 7 in Xu, Burns 2019)
@@ -671,7 +657,7 @@ def assign_backup_priorities(core, bkp_priorities):
 
 # is_last_task: True iff task is the last one that we are checking. If this task is schedulable,
 # then so is the whole systems.
-def verify_migration_task (task, cores, is_last_task):
+def verify_migration_task (task, cores, is_last_task, fetched_approach):
   # Cleanup "considered" flag on cores to start fresh for the new task
   if is_last_task:
     print ("last task is mig")
@@ -685,6 +671,7 @@ def verify_migration_task (task, cores, is_last_task):
     assert (next_core not in considered_cores), 'Picked the same core 2 times'
     considered_cores.append(next_core)
     if next_core is None:
+      print("shit!")
       return False
     cores[next_core]['considered'] = True
     # Always clone cores and tasks to avoid side effects
@@ -704,16 +691,16 @@ def verify_migration_task (task, cores, is_last_task):
       for task in verification_core['tasks']:
         assert(task['P'][next_core] >= 0), 'Side effects did not work for steady mode verification'
 
-      # Tasks verified for steady mode, with priority and Ri(LO), C(LO), etc.
-      # Get the LO-crit tasks, sorted by priority
-      LO_crit_tasks = get_LO_crit_tasks(verification_core['tasks'], next_core)
       assigned_migrating = False
       # priorities_backup = backup_priorities(verification_core['tasks'])
-      # Note: this is done in descending priority order (cfr. Semi2 model)
-      for LO_crit_task_i in LO_crit_tasks:
-        verification_cores_mode = copy.deepcopy(verification_cores)
-        # assign_backup_priorities(verification_cores_mode[next_core], priorities_backup) # TODO: non necessario perche' gia' si fa il clone?
-        verification_task_mode = verification_cores_mode[next_core]['tasks'][LO_crit_task_i]
+      verification_cores_mode = copy.deepcopy(verification_cores)
+      
+      if fetched_approach:
+        for T in verification_cores_mode[next_core]['tasks']:
+          if T['ID'] == task['ID']:
+            verification_task_mode = T
+            break
+        assert (verification_task_mode['ID'] == task['ID']), 'Fetched approach fails.'
         assert (verification_task_mode['HI'] == False), 'Only LO-crit tasks should be eligible for migration'
         assert (verification_task_mode['migrating'] == False), 'Already migrating LO-crit task selected for migration'
         verification_task_mode['migrating'] = True
@@ -731,17 +718,49 @@ def verify_migration_task (task, cores, is_last_task):
             cores[next_core]['tasks'] = verification_cores_mode[next_core]['tasks']
             # config.last_time_on_core_i_with_additional_migrating_task[next_core] = verification_cores_mode[next_core]['tasks']
             cores[next_core]['utilization'] += task['U']
+            for t in config.last_time_on_core_i[next_core]:
+              if t['ID'] == verification_task_mode['ID']:
+                t['migrating'] = True
+                break
             break
-        if assigned_migrating:
-          # # print ("migrating: ", verification_task_mode)
-          break
+      else:
+        # Tasks verified for steady mode, with priority and Ri(LO), C(LO), etc.
+        # Get the LO-crit (non-migrating) tasks, sorted by priority
+        # Note: this is done in descending priority order (cfr. Semi2 model)
+        LO_crit_tasks = get_LO_crit_tasks(verification_core['tasks'], next_core)
+        for LO_crit_task_i in LO_crit_tasks:
+          # assign_backup_priorities(verification_cores_mode[next_core], priorities_backup) # TODO: non necessario perche' gia' si fa il clone?
+          verification_task_mode = verification_cores_mode[next_core]['tasks'][LO_crit_task_i]
+          assert (verification_task_mode['HI'] == False), 'Only LO-crit tasks should be eligible for migration'
+          assert (verification_task_mode['migrating'] == False), 'Already migrating LO-crit task selected for migration'
+          verification_task_mode['migrating'] = True
+          # Try to assign the task to each migration group until a schedulable configuration
+          # is found or all routes are tested
+          for migration_group in cores[next_core]['migration']:
+            verification_task_mode['migration_route'] = migration_group
+            # Every migrating task must have new priorities in the landing core
+            for core in migration_group:
+              verification_task_mode['P'][core] = -1
+            # Verify mode changes
+            if verify_mode_changes(verification_cores_mode, is_last_task):
+              assigned_migrating = True
+              assigned = True
+              cores[next_core]['tasks'] = verification_cores_mode[next_core]['tasks']
+              # config.last_time_on_core_i_with_additional_migrating_task[next_core] = verification_cores_mode[next_core]['tasks']
+              cores[next_core]['utilization'] += task['U']
+              for t in config.last_time_on_core_i[next_core]:
+                if t['ID'] == verification_task_mode['ID']:
+                  t['migrating'] = True
+                  break
+              break
+          if assigned_migrating:
+            break
+
       if assigned_migrating:
         break
   if not assigned:
     return False
 
-    # #utils. print_taskset('c1', cores['c1']['tasks'])
-    # #utils. print_taskset('c2', cores['c2']['tasks'])
   return True
 
 def reset_all_priorities (cores):
@@ -755,11 +774,11 @@ def reset_all_priorities (cores):
 # 1. No migration model: Vestal's algorithm
 # 2. Model 1: 1 migration route for every core
 
-def verify_no_migration (taskset):
+def verify_no_migration (taskset, is_no_migration_algo):
   cores = copy.deepcopy(config.CORES_NO_MIGRATION)
   for task in taskset:
     reset_all_priorities(cores)
-    if not verify_no_migration_task(task, cores, False):
+    if not verify_no_migration_task(task, cores, False, is_no_migration_algo):
       return False
       
   scheduled_tasks = 0
@@ -768,12 +787,13 @@ def verify_no_migration (taskset):
   assert (scheduled_tasks == len(taskset)), 'No migration: Scheduled a number of task different than the taskset size'
   return True
 
-def verify_model_1 (taskset):
+def verify_model_1 (taskset, fetched_approach):
   i = 1
   config.where_last_mod_mig = ""
-  print(len(taskset))
+  # print(len(taskset))
   is_last_task = False
   cores = copy.deepcopy(config.CORES_MODEL_1)
+  print("cores :", cores)
   # system = copy.deepcopy(config.SYSTEM_MODEL)
 
   for task in taskset:
@@ -781,9 +801,9 @@ def verify_model_1 (taskset):
       is_last_task = True
     reset_all_priorities(cores)
     # Attempt assigning with no migration
-    if not verify_no_migration_task(task, cores, is_last_task):
+    if not verify_no_migration_task(task, cores, is_last_task, False):
       # Otherwise attempt migration
-      if task['HI'] or not verify_migration_task(task, cores, is_last_task):
+      if task['HI'] or not verify_migration_task(task, cores, is_last_task, fetched_approach):
         return False
     i = i + 1
 

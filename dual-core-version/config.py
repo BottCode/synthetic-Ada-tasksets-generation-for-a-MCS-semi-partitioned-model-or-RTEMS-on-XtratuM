@@ -2,27 +2,29 @@ import multiprocessing
 
 # Set number of parallel jobs
 # Watchout: in dual-core version PARALLEL_JOBS must set to 1.
-PARALLEL_JOBS = 1
+PARALLEL_JOBS = multiprocessing.cpu_count()
 
 # Enable/disable models to check
-CHECK_NO_MIGRATION = False
+CHECK_NO_MIGRATION = True
 CHECK_SEMI_1_BF    = True
-CHECK_SEMI_1_FF    = False
-CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = False
-CHECK_SEMI_2_FF    = False
-CHECK_SEMI_2_BF    = False
+CHECK_SEMI_1_FF    = True
+CHECK_SEMI_1_WF    = True
+CHECK_SEMI_2_WF    = True
+CHECK_SEMI_2_FF    = True
+CHECK_SEMI_2_BF    = True
+
+NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
-RUN_FIRST_TEST = False
-RUN_SECOND_TEST = False
+RUN_FIRST_TEST = True
+RUN_SECOND_TEST = True
 RUN_THIRD_TEST = True
-RUN_FOURTH_TEST = False
+RUN_FOURTH_TEST = True
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
-BEST_FIT_BP  = False 
-WORST_FIT_BP = True
+BEST_FIT_BP  = True 
+WORST_FIT_BP = False
 
 # Select version of Vestal's algorithm to use
 VESTAL_CLASSIC = False
@@ -31,7 +33,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 100
+NUMBER_OF_TESTS = 2
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
