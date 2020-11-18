@@ -4,34 +4,6 @@ import copy
 import functools
 import config
 import utils
-import xml.etree.ElementTree as ET
-import xml.dom.minidom
-
-semi2bf_file = './XML_tasksets/semi2-BF.xml'
-
-# c1: tasks on core 1
-# c2: tasks on core 2
-def save_taskset_as_XML (c1, c2):
-  cores = [[], []]
-  utilizations = [[], []]
-  tasks = [[], []]
-
-  tree = ET.parse(semi2bf_file)
-  root = tree.getroot()
-  taskset_selector = ET.SubElement(root, 'taskset')
-  size = ET.SubElement(taskset_selector, 'size')
-  size.text = str(len(c1) + len(c2))
-
-  cores[0] = ET.SubElement(taskset_selector, 'core1')
-  cores[1] = ET.SubElement(taskset_selector, 'core2')
-
-  utilizations[0] = ET.SubElement(cores[0], 'utilization')
-  utilizations[1] = ET.SubElement(cores[1], 'utilization')
-
-  tasks[0] = ET.SubElement(cores[0], 'tasks') 
-  tasks[1] = ET.SubElement(cores[1], 'tasks')  
-
-  tree.write(semi2bf_file)
 
 # Reset "considered" flag on cores
 # This is invoked when a new task is selected for scheduling

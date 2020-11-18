@@ -2,7 +2,7 @@ import multiprocessing
 
 # Set number of parallel jobs
 # Watchout: in dual-core version PARALLEL_JOBS must set to 1.
-PARALLEL_JOBS = multiprocessing.cpu_count()
+PARALLEL_JOBS = 1 # multiprocessing.cpu_count()
 
 # Enable/disable models to check
 CHECK_NO_MIGRATION = True
@@ -33,7 +33,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 10
+NUMBER_OF_TESTS = 1
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
@@ -118,3 +118,43 @@ SYSTEMS_SCHEDULABLE_SEMI1BF = []
 last_time_on_core_i = {'c1': [], 'c2': []}
 last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
 where_last_mod_mig = ""
+
+XML_Files = {
+  1: {
+    'semi1FF': './XML_tasksets/experiment_1/semi1-FF.xml',
+    'semi1BF': './XML_tasksets/experiment_1/semi1-BF.xml',
+    'semi1WF': './XML_tasksets/experiment_1/semi1-WF.xml',
+    'semi2FF': './XML_tasksets/experiment_1/semi2-FF.xml',
+    'semi2BF': './XML_tasksets/experiment_1/semi2-BF.xml',
+    'semi2WF': './XML_tasksets/experiment_1/semi2-WF.xml'
+  },
+
+  2: {
+    'semi1FF': './XML_tasksets/experiment_2/semi1-FF.xml',
+    'semi1BF': './XML_tasksets/experiment_2/semi1-BF.xml',
+    'semi1WF': './XML_tasksets/experiment_2/semi1-WF.xml',
+    'semi2FF': './XML_tasksets/experiment_2/semi2-FF.xml',
+    'semi2BF': './XML_tasksets/experiment_2/semi2-BF.xml',
+    'semi2WF': './XML_tasksets/experiment_2/semi2-WF.xml'
+  },
+  
+  3: {
+    'semi1FF': './XML_tasksets/experiment_3/semi1-FF.xml',
+    'semi1BF': './XML_tasksets/experiment_3/semi1-BF.xml',
+    'semi1WF': './XML_tasksets/experiment_3/semi1-WF.xml',
+    'semi2FF': './XML_tasksets/experiment_3/semi2-FF.xml',
+    'semi2BF': './XML_tasksets/experiment_3/semi2-BF.xml',
+    'semi2WF': './XML_tasksets/experiment_3/semi2-WF.xml'
+  },
+
+  4: {
+    'semi1FF': './XML_tasksets/experiment_4/semi1-FF.xml',
+    'semi1BF': './XML_tasksets/experiment_4/semi1-BF.xml',
+    'semi1WF': './XML_tasksets/experiment_4/semi1-WF.xml',
+    'semi2FF': './XML_tasksets/experiment_4/semi2-FF.xml',
+    'semi2BF': './XML_tasksets/experiment_4/semi2-BF.xml',
+    'semi2WF': './XML_tasksets/experiment_4/semi2-WF.xml'
+  },
+
+  
+}
