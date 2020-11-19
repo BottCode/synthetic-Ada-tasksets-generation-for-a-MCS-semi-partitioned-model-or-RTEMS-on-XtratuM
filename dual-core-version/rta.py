@@ -37,7 +37,7 @@ def worst_fit_bin_packing (task, cores):
 # Implements the best fit bin-packing algorithm
 # To use it set config.BEST_FIT_BP to True
 def best_fit_bin_packing (task, cores):
-  max_utilization = -1
+  max_utilization = 0
   result = None
   for c in cores:
     core = cores[c]

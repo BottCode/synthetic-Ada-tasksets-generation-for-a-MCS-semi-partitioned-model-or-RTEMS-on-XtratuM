@@ -75,7 +75,7 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
     for task in cores_steady[i]:
       task_XML = ET.SubElement(tasks_XML[i], 'task')
 
-      ID_XML = ET.SubElement(tasks_XML[i], 'ID')
+      ID_XML = ET.SubElement(task_XML, 'ID')
       ID_XML.text = str(task['ID'])
 
       criticality_XML = ET.SubElement(task_XML, 'criticality')
