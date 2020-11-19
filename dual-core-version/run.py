@@ -9,16 +9,16 @@ import sys
 import utils
 
 def print_XML():
-  print("with no mig pri")
+  # print("with no mig pri")
   utils.print_taskset(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
   
   if len(config.last_time_on_core_i_with_additional_migrating_task['c1']) + len(config.last_time_on_core_i_with_additional_migrating_task['c2']) > 0:
-    print("with MIG pri")
-    if config.where_last_mod_mig:
-      print(config.where_last_mod_mig)
+    # print("with MIG pri")
+    # if config.where_last_mod_mig:
+      # print(config.where_last_mod_mig)
     utils.print_taskset(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
   
-  print("-----")
+  # print("-----")
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
@@ -57,13 +57,13 @@ def select_bin_packing_algorithm (selection):
     config.BEST_FIT_BP  = True
     config.WORST_FIT_BP = False
   else:
-    print('!!! ERROR: No bin-packing algorithm selected !!!')
+    # print('!!! ERROR: No bin-packing algorithm selected !!!')
     sys.exit()
 
 # Run one instance of the tests (this functions is necessary for parallelism)
 def run_instance (n, p, f, U, experiment_id):
-  print("taskset: ", n, p, f, U)
-  taskset = generate_taskset(n, p, f, U)
+  # # print("taskset: ", n, p, f, U)
+  taskset, taskset_id = generate_taskset(n, p, f, U)
   # sys.exit()
   taskset_utilization = calc_total_utilization(taskset)
 
@@ -77,8 +77,8 @@ def run_instance (n, p, f, U, experiment_id):
   if config.CHECK_NO_MIGRATION:
     select_bin_packing_algorithm("BEST_FIT_BP")
     if verify_no_migration(copy.deepcopy(taskset), True):
-      print("Schedulable without migration")
-      print_XML()
+      # print("Schedulable without migration")
+      # print_XML()
       taskset_schedulability[0] = True
 
   fetched_approach = True
@@ -86,11 +86,11 @@ def run_instance (n, p, f, U, experiment_id):
     select_bin_packing_algorithm("BEST_FIT_BP")
     T = copy.deepcopy(taskset)
     if verify_model_1(T, fetched_approach):
-      print("taskset schedulable with semi1 BF")
-      utils.check_size_taskset_with_mig(n, 'semi1BF', experiment_id, U, f, p)
-      print_XML()
-      print(T)
-      print("---")
+      # print("taskset schedulable with semi1 BF")
+      utils.check_size_taskset_with_mig(n, 'semi1BF', experiment_id, U, f, p, taskset_id)
+      # print_XML()
+      # print(T)
+      # print("---")
       taskset_schedulability[1] = True
   
   if config.CHECK_SEMI_1_FF:
@@ -98,18 +98,18 @@ def run_instance (n, p, f, U, experiment_id):
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[2] = True
-      print("Schedulable with semi1 FF")
-      utils.check_size_taskset_with_mig(n, 'semi1FF', experiment_id, U, f, p)
-      print_XML()
+      # print("Schedulable with semi1 FF")
+      utils.check_size_taskset_with_mig(n, 'semi1FF', experiment_id, U, f, p, taskset_id)
+      # print_XML()
   
   if config.CHECK_SEMI_1_WF:
     select_bin_packing_algorithm("WORST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[3] = True
-      print("Schedulable with semi1 WF")
-      utils.check_size_taskset_with_mig(n, 'semi1WF', experiment_id, U, f, p)
-      print_XML()
+      # print("Schedulable with semi1 WF")
+      utils.check_size_taskset_with_mig(n, 'semi1WF', experiment_id, U, f, p, taskset_id)
+      # print_XML()
   
   fetched_approach = False
   if config.CHECK_SEMI_2_BF:
@@ -117,8 +117,8 @@ def run_instance (n, p, f, U, experiment_id):
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[4] = True
-      print("Schedulable with semi2 BF")
-      utils.check_size_taskset_with_mig(n, 'semi2BF', experiment_id, U, f, p)
+      # print("Schedulable with semi2 BF")
+      utils.check_size_taskset_with_mig(n, 'semi2BF', experiment_id, U, f, p, taskset_id)
       print_XML()
   
   if config.CHECK_SEMI_2_FF:
@@ -126,25 +126,25 @@ def run_instance (n, p, f, U, experiment_id):
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[5] = True
-      print("Schedulable with semi2 FF")
-      utils.check_size_taskset_with_mig(n, 'semi2FF', experiment_id, U, f, p)
-      print_XML()
+      # print("Schedulable with semi2 FF")
+      utils.check_size_taskset_with_mig(n, 'semi2FF', experiment_id, U, f, p, taskset_id)
+      # print_XML()
   
   if config.CHECK_SEMI_2_WF:
     select_bin_packing_algorithm("WORST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[6] = True
-      print("Schedulable with semi2 WF")
-      utils.check_size_taskset_with_mig(n, 'semi2WF', experiment_id, U, f, p)
-      print_XML()
+      # print("Schedulable with semi2 WF")
+      utils.check_size_taskset_with_mig(n, 'semi2WF', experiment_id, U, f, p, taskset_id)
+      # print_XML()
   
   return taskset_schedulability, taskset_utilization
 
 # First test: check percentage of schedulable tasksets with different utilizations
 def run_first_test ():
-
-  utils.clean_XML_Files(1)
+  experiment_id = 1
+  utils.clean_XML_and_Ada_Files(experiment_id)
 
   res_global = []
   for _ in range(config.NUMBER_OF_APPROACHES):
@@ -170,7 +170,7 @@ def run_first_test ():
     for _ in range(config.NUMBER_OF_APPROACHES):
       res_local.append([U,0])
 
-    results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(12, 0.5, 2, U, 1) for _ in range(config.NUMBER_OF_TESTS))
+    results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(12, 0.5, 2, U, experiment_id) for _ in range(config.NUMBER_OF_TESTS))
     for result in results:
       for i in range(config.NUMBER_OF_APPROACHES):
         if result[0][i]:
@@ -183,7 +183,8 @@ def run_first_test ():
     U += step
     first_test_bar.next()
 
-  utils.beautify_XML_Files(1)
+  utils.beautify_XML_Files(experiment_id)
+  utils.save_taskset_as_Ada(experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
 
@@ -213,7 +214,8 @@ def check_utilization_total_schedulability (n, p, f, experiment_id):
   return total_utilizations, total_schedulable_utilizations
 
 def run_second_test ():
-  utils.clean_XML_Files(2)
+  experiment_id = 2
+  utils.clean_XML_and_Ada_Files(experiment_id)
   res_global = []
   for _ in range(config.NUMBER_OF_APPROACHES):
     res_global.append([])
@@ -223,18 +225,20 @@ def run_second_test ():
   f_step = 0.25
   second_test_bar = Bar('Second test', max=11)
   while f <= finish_f:
-    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, 0.5, f, 2)
+    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, 0.5, f, experiment_id)
     for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([f, total_schedulable_utilizations[i] / total_utilizations])
     f += f_step
     second_test_bar.next()
 
-  utils.beautify_XML_Files(2)
+  utils.beautify_XML_Files(experiment_id)
+  utils.save_taskset_as_Ada(experiment_id)
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
 
 def run_third_test ():
-  utils.clean_XML_Files(3)
+  experiment_id = 3
+  utils.clean_XML_and_Ada_Files(experiment_id)
   res_global = []
   for _ in range(config.NUMBER_OF_APPROACHES):
     res_global.append([])
@@ -244,18 +248,20 @@ def run_third_test ():
   p_step = 0.1
   third_test_bar = Bar('Third test', max=9)
   while p <= finish_p:
-    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, p, 2, 3)
+    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, p, 2, experiment_id)
     for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([p, total_schedulable_utilizations[i] / total_utilizations])
     p += p_step
     third_test_bar.next()
   
-  utils.beautify_XML_Files(3)
+  utils.beautify_XML_Files(experiment_id)
+  utils.save_taskset_as_Ada(experiment_id)
   third_test_bar.finish()
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
 
 def run_fourth_test ():
-  utils.clean_XML_Files(4)
+  experiment_id = 4
+  utils.clean_XML_and_Ada_Files(experiment_id)
   res_global = []
   for _ in range(config.NUMBER_OF_APPROACHES):
     res_global.append([])
@@ -263,12 +269,13 @@ def run_fourth_test ():
   sizes = [8, 10, 12, 15, 20, 25, 30, 35]
   fourth_test_bar = Bar('Fourth test', max=8)
   for size in sizes:
-    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(size, 0.5, 2, 4)
+    total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(size, 0.5, 2, experiment_id)
     for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([size, total_schedulable_utilizations[i] / total_utilizations])
     fourth_test_bar.next()
   
-  utils.beautify_XML_Files(4)
+  utils.beautify_XML_Files(experiment_id)
+  utils.save_taskset_as_Ada(experiment_id)
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
 

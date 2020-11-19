@@ -16,10 +16,10 @@ CHECK_SEMI_2_BF    = True
 NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
-RUN_FIRST_TEST = False
-RUN_SECOND_TEST = False
+RUN_FIRST_TEST = True
+RUN_SECOND_TEST = True
 RUN_THIRD_TEST = True
-RUN_FOURTH_TEST = False
+RUN_FOURTH_TEST = True
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
@@ -33,7 +33,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 500
+NUMBER_OF_TESTS = 2
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
@@ -155,6 +155,44 @@ XML_Files = {
     'semi2BF': './XML_tasksets/experiment_4/semi2-BF.xml',
     'semi2WF': './XML_tasksets/experiment_4/semi2-WF.xml'
   },
-
-  
 }
+
+Ada_Paths = {
+  1: {
+    'semi1FF': './Ada_tasksets/experiment_1/semi1-FF/',
+    'semi1BF': './Ada_tasksets/experiment_1/semi1-BF/',
+    'semi1WF': './Ada_tasksets/experiment_1/semi1-WF/',
+    'semi2FF': './Ada_tasksets/experiment_1/semi2-FF/',
+    'semi2BF': './Ada_tasksets/experiment_1/semi2-BF/',
+    'semi2WF': './Ada_tasksets/experiment_1/semi2-WF/'
+  },
+
+  2: {
+    'semi1FF': './Ada_tasksets/experiment_2/semi1-FF/',
+    'semi1BF': './Ada_tasksets/experiment_2/semi1-BF/',
+    'semi1WF': './Ada_tasksets/experiment_2/semi1-WF/',
+    'semi2FF': './Ada_tasksets/experiment_2/semi2-FF/',
+    'semi2BF': './Ada_tasksets/experiment_2/semi2-BF/',
+    'semi2WF': './Ada_tasksets/experiment_2/semi2-WF/'
+  },
+  
+  3: {
+    'semi1FF': './Ada_tasksets/experiment_3/semi1-FF/',
+    'semi1BF': './Ada_tasksets/experiment_3/semi1-BF/',
+    'semi1WF': './Ada_tasksets/experiment_3/semi1-WF/',
+    'semi2FF': './Ada_tasksets/experiment_3/semi2-FF/',
+    'semi2BF': './Ada_tasksets/experiment_3/semi2-BF/',
+    'semi2WF': './Ada_tasksets/experiment_3/semi2-WF/'
+  },
+
+  4: {
+    'semi1FF': './Ada_tasksets/experiment_4/semi1-FF/',
+    'semi1BF': './Ada_tasksets/experiment_4/semi1-BF/',
+    'semi1WF': './Ada_tasksets/experiment_4/semi1-WF/',
+    'semi2FF': './Ada_tasksets/experiment_4/semi2-FF/',
+    'semi2BF': './Ada_tasksets/experiment_4/semi2-BF/',
+    'semi2WF': './Ada_tasksets/experiment_4/semi2-WF/'
+  },
+}
+
+GLOBAL_TASKSET_ID = 0

@@ -2,6 +2,7 @@ import numpy
 import math
 import random
 import functools
+import config
 
 # Default values taken from "Techniques For The Synthesis Of Multiprocessor Tasksets" by Emberson, et. al
 # cfr. https://www.researchgate.net/publication/241677949_Techniques_For_The_Synthesis_Of_Multiprocessor_Tasksets
@@ -50,6 +51,7 @@ def sort_tasks_criticality (t1, t2):
 # maxU -> Total taskset utilization
 def generate_taskset (n, p, f, maxU):
   # print (n)
+  config.GLOBAL_TASKSET_ID += 1
   HI_tot = n * p
   LO_tot = n - HI_tot
   U = UUnifast_discard(n, maxU)
@@ -100,7 +102,7 @@ def generate_taskset (n, p, f, maxU):
     assert (task['U'] <= 1), 'Created task with utilization > 1'
     result_f = task['C(HI)'] / task['C(LO)']
     assert (math.isclose(result_f, f)), 'Something wrong with criticality factor, expected: ' + str(f) + ', found: ' + str(result_f)
-  return taskset
+  return taskset, config.GLOBAL_TASKSET_ID
 
 def calc_total_utilization (taskset):
   result = 0

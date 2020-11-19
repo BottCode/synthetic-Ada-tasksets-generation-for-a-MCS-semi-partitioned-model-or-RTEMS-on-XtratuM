@@ -3,7 +3,7 @@
     <approach>semi2BF</approach>
     <taskset>
 
-        <id>-1</id>
+        <tasksetid>-1</tasksetid>
         <size></size> <!-- number of tasks in this taskset -->
         <tasksetutilization></tasksetutilization> <!-- total util for this tasket -->
         <criticalityfactor></criticalityfactor>
@@ -14,6 +14,7 @@
             <tasks>
                 <total>1</total> <!-- number of tasks on core 1 -->
                 <task>
+                    <ID></ID>
                     <criticality> LO </criticality>
                     <CHI></CHI> <!-- HI-crit execution time -->
                     <CLO></CLO>

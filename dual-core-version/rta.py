@@ -603,8 +603,8 @@ def assign_backup_priorities(core, bkp_priorities):
 # then so is the whole systems.
 def verify_migration_task (task, cores, is_last_task, fetched_approach):
   # Cleanup "considered" flag on cores to start fresh for the new task
-  if is_last_task:
-    print ("last task is mig")
+  # if is_last_task:
+    # print ("last task is mig")
   reset_considered(cores)
   assigned = False
   count = 0

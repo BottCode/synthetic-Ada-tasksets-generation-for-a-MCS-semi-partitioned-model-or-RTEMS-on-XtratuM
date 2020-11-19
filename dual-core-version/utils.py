@@ -1,20 +1,86 @@
 import copy
 import config
 
+import os
+
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
-from shutil import copyfile
+from shutil import copyfile, rmtree
 
-def clean_XML_Files(experiment_id):
-  Files_To_Clean = config.XML_Files[experiment_id]
+def CLEAN_ALL():
+  for i in range(4):
+    clean_XML_and_Ada_Files(i+1)
+
+def clean_XML_and_Ada_Files(experiment_id):
   xml_template = './XML_tasksets/template.xml'
 
   for path in config.XML_Files[experiment_id]:
     copyfile(xml_template, config.XML_Files[experiment_id][path])
 
+  for path in config.Ada_Paths[experiment_id]:
 
-def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2):
+    for filename in os.listdir(config.Ada_Paths[experiment_id][path]):
+      filepath = os.path.join(config.Ada_Paths[experiment_id][path], filename)
+      if os.path.exists(filepath) and filename != '.gitkeep':
+        os.remove(filepath)  
+  
+
+def save_taskset_as_Ada (experiment_id):
+  string_tasks = []
+  for approach in config.XML_Files[experiment_id]:
+    tree = ET.parse(config.XML_Files[experiment_id][approach])
+    root = tree.getroot()
+
+    for taskset in root.findall('taskset'):
+      taskset_id = int(taskset[0].text)
+      if taskset_id != -1:
+        Ada_Unit = ''
+        withed_unit = 'with Periodic_Tasks;\n'
+        taskset_name = 'E' + str(experiment_id) + '_' + approach + '_T' + str(taskset_id)
+        package_name = '\npackage body Taskset_' + taskset_name + ' is\nbegin\n\n'
+        file_name = 'Taskset_' + taskset_name + '.adb'
+
+        Ada_Unit += withed_unit + package_name
+
+        cores_XML = [taskset.find('core1'), taskset.find('core2')]
+        for core_XML in cores_XML:
+          tasks_XML = core_XML.find('tasks')
+          
+          for task_XML in tasks_XML.findall('task'):
+            current_task = '  T_'
+            current_task += task_XML.find('ID').text + ' : '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              current_task += 'High_Crit ('
+            else:
+              current_task += 'Low_Crit ('
+            
+            current_task += 'Pri => ' + task_XML.find('priority').text + ', '
+            current_task += 'Low_Critical_Budget => ' + task_XML.find('CLO').text + ', '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              current_task += 'High_Critical_Budget => ' + task_XML.find('CHI').text + ', '
+            else:
+              current_task += 'Is_Migrable => ' + task_XML.find('migrating').text + ', '
+            
+            current_task += 'Workload => 0, ' # + task_XML.find('workload').text + ', '
+            current_task += 'Period => ' + task_XML.find('period').text + ', '
+            current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
+
+            Ada_Unit += current_task + '\n'
+
+            string_tasks.append(current_task)
+            
+            # print(current_task)
+
+        Ada_Unit += '\nend ' + taskset_name + ';\n'
+        f = open(config.Ada_Paths[experiment_id][approach] + file_name, 'w')
+        f.write(Ada_Unit)
+        f.close()
+
+
+def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2, taskset_id):
   number_of_cores = 2
   cores_indexes = ['c1', 'c2']
 
@@ -23,12 +89,12 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
   cores_steady = [c1_steady, c2_steady]
   cores_with_mig = [c1_with_mig, c2_with_mig]
 
-  print("SAVE THIS ")
+  '''print("SAVE THIS ")
   print(config.XML_Files[experiment_id][approach])
   print(c1_steady)
   print(c2_steady)
   print(c1_with_mig)
-  print(c2_with_mig)
+  print(c2_with_mig)'''
   cores = [[], []]
   utilizations_XML = [[], []]
   tasks_XML = [[], []]
@@ -37,6 +103,9 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
   root = tree.getroot()
 
   taskset_selector_XML = ET.SubElement(root, 'taskset')
+
+  tasksetid_XML = ET.SubElement(taskset_selector_XML, 'tasksetid')
+  tasksetid_XML.text = str(taskset_id)
 
   size_XML = ET.SubElement(taskset_selector_XML, 'size')
   size_XML.text = str(len(c1_steady) + len(c2_steady))
@@ -146,7 +215,7 @@ def print_taskset (core_1, core_2):
     for task in core_2:
       print (task)
 
-def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utilization, criticality_factor, hi_crit_proportion):
+def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utilization, criticality_factor, hi_crit_proportion, taskset_id):
   assert(len(config.last_time_on_core_i['c1']) + len(config.last_time_on_core_i['c2']) == total), "Wrong number of scheduled tasks"
   cores = ['c1', 'c2']
   # is there at least one migrating task on c_i?
@@ -247,7 +316,25 @@ def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utiliza
       config.last_time_on_core_i_with_additional_migrating_task['c1'] = []
 
   if mig_on_c_i['c1'] or mig_on_c_i['c2']:
-    save_taskset_as_XML(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'], approach, experiment_id, taskset_utilization, criticality_factor, hi_crit_proportion, util_on_core_i['c1'], util_on_core_i['c2'])
+    # check_order_preservation(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
+    save_taskset_as_XML(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'], approach, experiment_id, taskset_utilization, criticality_factor, hi_crit_proportion, util_on_core_i['c1'], util_on_core_i['c2'], taskset_id)
+
+# It checks if c_i_steady has the same "tasks order relationship" of c_i_with_mig
+def check_order_preservation(c1_steady, c2_steady, c1_with_mig, c2_with_mig):
+  '''cores_indexes = ['c1', 'c2']
+  c_i_steady = {'c1': c1_steady, 'c2': c2_steady}
+  c_i_with_migs = {'c1': c1_with_mig, 'c2': c2_with_mig}
+  c_i_migs = {'c1': [], 'c2': []}
+  for core in cores_indexes
+    if core == 'c1':
+      other_core = 'c2'
+    else:
+      other_core = 'c1'
+  if len(c_i_with_migs[core]) > 0:
+    # get c_other_core's migrating tasks.
+    for task in c_i_steady[other_core]:
+      if task['migrating']:
+        c_i_mig[other_core].append([task['ID'], task['P']])'''
 
 def beautify_XML_Files(experiment_id):
   for path in config.XML_Files[experiment_id]:
