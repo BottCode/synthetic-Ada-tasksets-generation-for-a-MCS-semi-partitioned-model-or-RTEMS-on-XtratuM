@@ -20,10 +20,10 @@ def clean_XML_and_Ada_Files(experiment_id):
 
   for path in config.Ada_Paths[experiment_id]:
 
-    for filename in os.listdir(config.Ada_Paths[experiment_id][path]):
-      filepath = os.path.join(config.Ada_Paths[experiment_id][path], filename)
-      if os.path.exists(filepath) and filename != '.gitkeep':
-        os.remove(filepath)  
+    for dirname in os.listdir(config.Ada_Paths[experiment_id][path]):
+      dirpath = os.path.join(config.Ada_Paths[experiment_id][path], dirname)
+      if os.path.exists(dirpath) and dirname != '.gitkeep':
+        rmtree(dirpath)  
   
 
 def save_taskset_as_Ada (experiment_id):
@@ -36,8 +36,69 @@ def save_taskset_as_Ada (experiment_id):
       taskset_id = int(taskset[0].text)
       if taskset_id != -1:
         Ada_Unit = ''
-        withed_unit = 'with Periodic_Tasks;\n'
+        Main_Unit = ''
+
         taskset_name = 'E' + str(experiment_id) + '_' + approach + '_T' + str(taskset_id)
+
+        # Main generation
+        main_name = 'main_' + taskset_name
+        main_file_name = main_name + '.adb'
+        main_withed_united = 'with Taskset_' + taskset_name + ';\nwith System;\n\n' 
+        main_procedure = 'procedure ' + main_name + ' is\n'
+        main_decl_section = "    pragma Priority (System.Priority'Last);\n    pragma CPU (1);\n"
+        main_body = 'begin\n    Periodic_Tasks.Init;\nend' + main_name + ';'
+        
+        Main_Unit += main_withed_united + main_procedure + main_decl_section + main_body
+
+        taskset_dir = config.Ada_Paths[experiment_id][approach] + taskset_name + '/'
+        os.mkdir(taskset_dir)
+        
+        # dir containing src code
+        src_dir = taskset_dir + 'src/'
+        os.mkdir(src_dir)
+        # dir containing compiled code
+        object_code_dir = taskset_dir + 'obj/'
+        os.mkdir(object_code_dir)
+
+        # .gpr file project generation
+        project_file_name = main_name + '.gpr'
+        project = 'project ' + main_name + ' is\n\n'
+        project += '    for Languages use ("ada");\n    for Main use ("' + main_file_name + '");\n    for Source_Dirs use ("src", "../common");\n    for Object_Dir use "obj";\n    for Runtime ("ada") use '
+        runtime_dir = config.RUNTIME_DIR + ';\n'
+        project += runtime_dir + '    for Target use "arm-eabi";\n\n'
+        project += '    package Compiler is\n        for Switches ("ada") use ("-g", "-gnatwa", "-gnatQ");\n    end Compiler;\n\n'
+        project += '    package Builder is\n        for Switches ("ada") use ("-g", "-O0");\n    end Builder;\n\n'
+        project += 'end ' + main_name + ';'
+
+        f = open(taskset_dir + project_file_name, 'w')
+        f.write(project)
+        f.close()
+
+        # Makefile generation
+
+        make_all = 'all: test\n\n'
+        make_test = 'test:\n    gprbuild ' + project_file_name + '\n\n'
+        make_clean = 'clean:\n    gprclean ' + project_file_name + '\n\n'
+        makefile = make_all + make_test + make_clean
+
+        f = open(taskset_dir + 'makefile', 'w')
+        f.write(makefile)
+        f.close()
+
+        # flashing script and board init file
+        
+        template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
+        cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
+        copyfile(template_cora_xsdb_file, taskset_dir + 'cora_xsdb.ini')
+        copyfile(cora_ps7_init_file, taskset_dir + 'cora_ps7_init.tcl')
+
+        f = open(taskset_dir + 'cora_xsdb.ini', 'a')
+        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon')
+        f.close()
+
+        # Ada uniti generation
+
+        withed_unit = 'with Periodic_Tasks;\n'
         package_name = '\npackage body Taskset_' + taskset_name + ' is\nbegin\n\n'
         file_name = 'Taskset_' + taskset_name + '.adb'
 
@@ -75,10 +136,14 @@ def save_taskset_as_Ada (experiment_id):
             # print(current_task)
 
         Ada_Unit += '\nend ' + taskset_name + ';\n'
-        f = open(config.Ada_Paths[experiment_id][approach] + file_name, 'w')
+        # create taskset unit Ada file
+        f = open(src_dir + file_name, 'w')
         f.write(Ada_Unit)
         f.close()
-
+        # create main unit Ada file
+        f = open(src_dir + main_file_name, 'w')
+        f.write(Main_Unit)
+        f.close()
 
 def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2, taskset_id):
   number_of_cores = 2

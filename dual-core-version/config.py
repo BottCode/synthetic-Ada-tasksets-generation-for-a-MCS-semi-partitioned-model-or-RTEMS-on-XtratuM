@@ -196,3 +196,5 @@ Ada_Paths = {
 }
 
 GLOBAL_TASKSET_ID = 0
+
+RUNTIME_DIR = '"../../runtime/arm-eabi/lib/gnat/ravenscar_full_zynq7000"'
