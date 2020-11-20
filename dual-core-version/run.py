@@ -9,16 +9,16 @@ import sys
 import utils
 
 def print_XML():
-  # print("with no mig pri")
+  # # print("with no mig pri")
   utils.print_taskset(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
   
   if len(config.last_time_on_core_i_with_additional_migrating_task['c1']) + len(config.last_time_on_core_i_with_additional_migrating_task['c2']) > 0:
-    # print("with MIG pri")
+    # # print("with MIG pri")
     # if config.where_last_mod_mig:
-      # print(config.where_last_mod_mig)
+      # # print(config.where_last_mod_mig)
     utils.print_taskset(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
   
-  # print("-----")
+  # # print("-----")
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
@@ -57,12 +57,12 @@ def select_bin_packing_algorithm (selection):
     config.BEST_FIT_BP  = True
     config.WORST_FIT_BP = False
   else:
-    # print('!!! ERROR: No bin-packing algorithm selected !!!')
+    # # print('!!! ERROR: No bin-packing algorithm selected !!!')
     sys.exit()
 
 # Run one instance of the tests (this functions is necessary for parallelism)
 def run_instance (n, p, f, U, experiment_id):
-  # # print("taskset: ", n, p, f, U)
+  # # # print("taskset: ", n, p, f, U)
   taskset, taskset_id = generate_taskset(n, p, f, U)
   # sys.exit()
   taskset_utilization = calc_total_utilization(taskset)
@@ -75,7 +75,7 @@ def run_instance (n, p, f, U, experiment_id):
   config.last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
 
   if config.CHECK_NO_MIGRATION:
-    select_bin_packing_algorithm("BEST_FIT_BP")
+    select_bin_packing_algorithm("WORST_FIT_BP")
     if verify_no_migration(copy.deepcopy(taskset), True):
       # print("Schedulable without migration")
       # print_XML()
@@ -89,8 +89,8 @@ def run_instance (n, p, f, U, experiment_id):
       # print("taskset schedulable with semi1 BF")
       utils.check_size_taskset_with_mig(n, 'semi1BF', experiment_id, U, f, p, taskset_id)
       # print_XML()
-      # print(T)
-      # print("---")
+      # # print(T)
+      # # print("---")
       taskset_schedulability[1] = True
   
   if config.CHECK_SEMI_1_FF:
@@ -282,17 +282,17 @@ def run_fourth_test ():
 config.RUNTIME_DIR = '"' + sys.argv[1] + '"'
 
 if config.RUN_FIRST_TEST:
-  print('>>> Running first test')
+  # print('>>> Running first test')
   run_first_test()
 if config.RUN_SECOND_TEST:
-  print('>>> Running second test')
+  # print('>>> Running second test')
   run_second_test()
 if config.RUN_THIRD_TEST:
-  print('>>> Running third test')
+  # print('>>> Running third test')
   run_third_test()
 if config.RUN_FOURTH_TEST:
-  print('>>> Running fourth test')
+  # print('>>> Running fourth test')
   run_fourth_test()
-print('>>> Done')
+# print('>>> Done')
 
 config.RUNTIME_DIR = ""

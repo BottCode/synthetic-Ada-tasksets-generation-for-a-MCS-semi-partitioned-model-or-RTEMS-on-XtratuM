@@ -17,9 +17,9 @@ NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
 RUN_FIRST_TEST = True
-RUN_SECOND_TEST = False
-RUN_THIRD_TEST = False
-RUN_FOURTH_TEST = False
+RUN_SECOND_TEST = True
+RUN_THIRD_TEST = True
+RUN_FOURTH_TEST = True
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
@@ -33,7 +33,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 2
+NUMBER_OF_TESTS = 100
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
