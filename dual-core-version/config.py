@@ -17,9 +17,9 @@ NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
 RUN_FIRST_TEST = True
-RUN_SECOND_TEST = True
-RUN_THIRD_TEST = True
-RUN_FOURTH_TEST = True
+RUN_SECOND_TEST = False
+RUN_THIRD_TEST = False
+RUN_FOURTH_TEST = False
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
@@ -197,4 +197,4 @@ Ada_Paths = {
 
 GLOBAL_TASKSET_ID = 0
 
-RUNTIME_DIR = '"../../runtime/arm-eabi/lib/gnat/ravenscar_full_zynq7000"'
+RUNTIME_DIR = '""'

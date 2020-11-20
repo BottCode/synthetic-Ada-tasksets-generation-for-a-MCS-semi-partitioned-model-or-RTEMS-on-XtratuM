@@ -279,6 +279,8 @@ def run_fourth_test ():
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
 
+config.RUNTIME_DIR = '"' + sys.argv[1] + '"'
+
 if config.RUN_FIRST_TEST:
   print('>>> Running first test')
   run_first_test()
@@ -292,3 +294,5 @@ if config.RUN_FOURTH_TEST:
   print('>>> Running fourth test')
   run_fourth_test()
 print('>>> Done')
+
+config.RUNTIME_DIR = ""

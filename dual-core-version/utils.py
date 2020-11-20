@@ -96,13 +96,14 @@ def save_taskset_as_Ada (experiment_id):
         f.write('dow ' + 'obj/main_' + taskset_name + '\ncon')
         f.close()
 
-        # Ada uniti generation
+        # Ada unit generation
 
         withed_unit = 'with Periodic_Tasks;\n'
         package_name = '\npackage body Taskset_' + taskset_name + ' is\nbegin\n\n'
+        set_hyperperiod = '  Periodic_Tasks.Experiment_Hyperperiod := ' + ' 1_000_000;\n\n'
         file_name = 'Taskset_' + taskset_name + '.adb'
 
-        Ada_Unit += withed_unit + package_name
+        Ada_Unit += withed_unit + package_name + set_hyperperiod
 
         cores_XML = [taskset.find('core1'), taskset.find('core2')]
         for core_XML in cores_XML:

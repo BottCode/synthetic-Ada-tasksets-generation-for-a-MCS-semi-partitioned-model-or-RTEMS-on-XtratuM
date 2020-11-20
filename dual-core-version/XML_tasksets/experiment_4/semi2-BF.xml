@@ -1,137 +1,44 @@
-<?xml version="1.0" ?>
 <tasksets>
-	
-    
-	<numberoftasksets>0</numberoftasksets>
-	 
-	<!-- number of tasksets in this file -->
-	
-    
-	<approach>semi2BF</approach>
-	
-    
-	<taskset>
-		
+    <numberoftasksets>0</numberoftasksets> <!-- number of tasksets in this file -->
+    <approach>semi2BF</approach>
+    <taskset>
 
-        
-		<tasksetid>-1</tasksetid>
-		
-        
-		<size/>
-		 
-		<!-- number of tasks in this taskset -->
-		
-        
-		<tasksetutilization/>
-		 
-		<!-- total util for this tasket -->
-		
-        
-		<criticalityfactor/>
-		
-        
-		<perc/>
-		 
-		<!-- probability P to generate an HI-crit task -->
-		
+        <tasksetid>-1</tasksetid>
+        <size></size> <!-- number of tasks in this taskset -->
+        <tasksetutilization></tasksetutilization> <!-- total util for this tasket -->
+        <criticalityfactor></criticalityfactor>
+        <perc></perc> <!-- probability P to generate an HI-crit task -->
 
-        
-		<core1>
-			
-            
-			<utilization/>
-			
-            
-			<tasks>
-				
-                
-				<total>1</total>
-				 
-				<!-- number of tasks on core 1 -->
-				
-                
-				<task>
-					
-                    
-					<ID/>
-					
-                    
-					<criticality> LO </criticality>
-					
-                    
-					<CHI/>
-					 
-					<!-- HI-crit execution time -->
-					
-                    
-					<CLO/>
-					
-                    
-					<nominalutil/>
-					 
-					<!-- nominal utilization -->
-					
-                    
-					<deadline/>
-					
-                    
-					<reduceddead/>
-					
-                    
-					<jitter/>
-					
-                    
-					<migrating/>
-					 
-					<!-- is this task migrating? -->
-					
-                    
-					<!-- if current task is NOT migrating, "priority" is task priority during i) steady mode and ii) hi-crit mode -->
-					
-                    
-					<!-- if current task IS migrating, "priority" is task priority during steady mode. If its original core enter in hi-crit mode
+        <core1>
+            <utilization></utilization>
+            <tasks>
+                <total>1</total> <!-- number of tasks on core 1 -->
+                <task>
+                    <ID></ID>
+                    <criticality> LO </criticality>
+                    <CHI></CHI> <!-- HI-crit execution time -->
+                    <CLO></CLO>
+                    <nominalutil></nominalutil> <!-- nominal utilization -->
+                    <deadline></deadline>
+                    <reduceddead></reduceddead>
+                    <jitter></jitter>
+                    <migrating></migrating> <!-- is this task migrating? -->
+                    <!-- if current task is NOT migrating, "priority" is task priority during i) steady mode and ii) hi-crit mode -->
+                    <!-- if current task IS migrating, "priority" is task priority during steady mode. If its original core enter in hi-crit mode
                     , this task has to migrate to the other core.-->
-					
-                    
-					<priority/>
-					
-                    
-					<!-- the current task executes with "hostingmigpriority" only when its core is hosting the migrating tasks of the other core,
-                    i.e. the other core is executing in HI-Crit mode and this core is executing in LO-crit mode -->
-					 
-                    
-					<hostingmigpriority/>
-					
-                    
-					<!-- if this task is migrating, it executes with "targetpriority" when it migrates to the target core. -->
-					
-                    
-					<targetpriority/>
-					 
-					<!-- task priority on migrating core -->
-					
-                    
-					<period/>
-					
-                    
-					<workload/>
-					
-                
-				</task>
-				
-            
-			</tasks>
-			
-        
-		</core1>
-		
+                    <priority></priority>
+                    <!-- the current task executes with "hostingmigpriority" only when its core is hosting the migrating tasks of the other core,
+                    i.e. the other core is executing in HI-Crit mode and this core is executing in LO-crit mode --> 
+                    <hostingmigpriority></hostingmigpriority>
+                    <!-- if this task is migrating, it executes with "targetpriority" when it migrates to the target core. -->
+                    <targetpriority></targetpriority> <!-- task priority on migrating core -->
+                    <period></period>
+                    <workload></workload>
+                </task>
+            </tasks>
+        </core1>
 
-        
-		<core2>
+        <core2>
         </core2>
-		
-    
-	</taskset>
-	
-
+    </taskset>
 </tasksets>
