@@ -46,7 +46,7 @@ def save_taskset_as_Ada (experiment_id):
         main_withed_united = 'with Taskset_' + taskset_name + ';\nwith System;\n\n' 
         main_procedure = 'procedure ' + main_name + ' is\n'
         main_decl_section = "    pragma Priority (System.Priority'Last);\n    pragma CPU (1);\n"
-        main_body = 'begin\n    Periodic_Tasks.Init;\nend' + main_name + ';'
+        main_body = 'begin\n    Periodic_Tasks.Init;\nend ' + main_name + ';'
         
         Main_Unit += main_withed_united + main_procedure + main_decl_section + main_body
 
@@ -63,11 +63,11 @@ def save_taskset_as_Ada (experiment_id):
         # .gpr file project generation
         project_file_name = main_name + '.gpr'
         project = 'project ' + main_name + ' is\n\n'
-        project += '    for Languages use ("ada");\n    for Main use ("' + main_file_name + '");\n    for Source_Dirs use ("src", "../common");\n    for Object_Dir use "obj";\n    for Runtime ("ada") use '
+        project += '\tfor Languages use ("ada");\n\tfor Main use ("' + main_file_name + '");\n\tfor Source_Dirs use ("src", "../../../common");\n\tfor Object_Dir use "obj";\n    for Runtime ("ada") use '
         runtime_dir = config.RUNTIME_DIR + ';\n'
-        project += runtime_dir + '    for Target use "arm-eabi";\n\n'
-        project += '    package Compiler is\n        for Switches ("ada") use ("-g", "-gnatwa", "-gnatQ");\n    end Compiler;\n\n'
-        project += '    package Builder is\n        for Switches ("ada") use ("-g", "-O0");\n    end Builder;\n\n'
+        project += runtime_dir + '\tfor Target use "arm-eabi";\n\n'
+        project += '\tpackage Compiler is\n        for Switches ("ada") use ("-g", "-gnatwa", "-gnatQ");\n    end Compiler;\n\n'
+        project += '\tpackage Builder is\n        for Switches ("ada") use ("-g", "-O0");\n    end Builder;\n\n'
         project += 'end ' + main_name + ';'
 
         f = open(taskset_dir + project_file_name, 'w')
@@ -76,9 +76,9 @@ def save_taskset_as_Ada (experiment_id):
 
         # Makefile generation
 
-        make_all = 'all: test\n\n'
-        make_test = 'test:\n    gprbuild ' + project_file_name + '\n\n'
-        make_clean = 'clean:\n    gprclean ' + project_file_name + '\n\n'
+        make_all = 'all:  test\n\n'
+        make_test = 'test:\n\tgprbuild ' + project_file_name + '\n\n'
+        make_clean = 'clean:\n\tgprclean ' + project_file_name + '\n\n'
         makefile = make_all + make_test + make_clean
 
         f = open(taskset_dir + 'makefile', 'w')
