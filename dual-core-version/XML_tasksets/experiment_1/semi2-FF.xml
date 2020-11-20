@@ -4,8 +4,6 @@
     
 	<numberoftasksets>0</numberoftasksets>
 	 
-	<!-- number of tasksets in this file -->
-	
     
 	<approach>semi2BF</approach>
 	
@@ -19,21 +17,15 @@
         
 		<size/>
 		 
-		<!-- number of tasks in this taskset -->
-		
         
 		<tasksetutilization/>
 		 
-		<!-- total util for this tasket -->
-		
         
 		<criticalityfactor/>
 		
         
 		<perc/>
 		 
-		<!-- probability P to generate an HI-crit task -->
-		
 
         
 		<core1>
@@ -47,8 +39,6 @@
                 
 				<total>1</total>
 				 
-				<!-- number of tasks on core 1 -->
-				
                 
 				<task>
 					
@@ -61,16 +51,12 @@
                     
 					<CHI/>
 					 
-					<!-- HI-crit execution time -->
-					
                     
 					<CLO/>
 					
                     
 					<nominalutil/>
 					 
-					<!-- nominal utilization -->
-					
                     
 					<deadline/>
 					
@@ -83,33 +69,19 @@
                     
 					<migrating/>
 					 
-					<!-- is this task migrating? -->
-					
                     
-					<!-- if current task is NOT migrating, "priority" is task priority during i) steady mode and ii) hi-crit mode -->
-					
                     
-					<!-- if current task IS migrating, "priority" is task priority during steady mode. If its original core enter in hi-crit mode
-                    , this task has to migrate to the other core.-->
-					
                     
 					<priority/>
 					
-                    
-					<!-- the current task executes with "hostingmigpriority" only when its core is hosting the migrating tasks of the other core,
-                    i.e. the other core is executing in HI-Crit mode and this core is executing in LO-crit mode -->
-					 
+                     
                     
 					<hostingmigpriority/>
 					
                     
-					<!-- if this task is migrating, it executes with "targetpriority" when it migrates to the target core. -->
-					
                     
 					<targetpriority/>
 					 
-					<!-- task priority on migrating core -->
-					
                     
 					<period/>
 					
@@ -134,4 +106,215 @@
 	</taskset>
 	
 
+	<taskset>
+		<tasksetid>47</tasksetid>
+		<size>12</size>
+		<tasksetutilization>1.8760000000000003</tasksetutilization>
+		<criticalityfactor>2</criticalityfactor>
+		<perc>0.5</perc>
+		<core1>
+			<utilization>0.9723972180930731</utilization>
+			<tasks>
+				<total>5</total>
+				<task>
+					<ID>5</ID>
+					<criticality>HIGH</criticality>
+					<CHI>5.302154946885368</CHI>
+					<CLO>2.651077473442684</CLO>
+					<nominalutil>0.5302154946885368</nominalutil>
+					<deadline>10</deadline>
+					<reduceddead>10.0</reduceddead>
+					<jitter>0.0</jitter>
+					<migrating>False</migrating>
+					<priority>4</priority>
+					<hostingmigpriority>4</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>10</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>11</ID>
+					<criticality>HIGH</criticality>
+					<CHI>11.80360289736615</CHI>
+					<CLO>5.901801448683075</CLO>
+					<nominalutil>0.29509007243415375</nominalutil>
+					<deadline>40</deadline>
+					<reduceddead>37.34892252655732</reduceddead>
+					<jitter>2.651077473442685</jitter>
+					<migrating>False</migrating>
+					<priority>3</priority>
+					<hostingmigpriority>3</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>40</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>0</ID>
+					<criticality>HIGH</criticality>
+					<CHI>37.793074198365936</CHI>
+					<CLO>18.896537099182968</CLO>
+					<nominalutil>0.10798021199533125</nominalutil>
+					<deadline>350</deadline>
+					<reduceddead>333.49388865754617</reduceddead>
+					<jitter>16.50611134245381</jitter>
+					<migrating>False</migrating>
+					<priority>2</priority>
+					<hostingmigpriority>2</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>350</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>10</ID>
+					<criticality>HIGH</criticality>
+					<CHI>8.67552939694545</CHI>
+					<CLO>4.337764698472725</CLO>
+					<nominalutil>0.020175649760338255</nominalutil>
+					<deadline>430</deadline>
+					<reduceddead>394.59735155836324</reduceddead>
+					<jitter>35.402648441636785</jitter>
+					<migrating>False</migrating>
+					<priority>1</priority>
+					<hostingmigpriority>1</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>430</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>7</ID>
+					<criticality>HIGH</criticality>
+					<CHI>16.284778724653233</CHI>
+					<CLO>8.142389362326616</CLO>
+					<nominalutil>0.01893578921471306</nominalutil>
+					<deadline>860</deadline>
+					<reduceddead>809.055630464322</reduceddead>
+					<jitter>50.94436953567794</jitter>
+					<migrating>False</migrating>
+					<priority>0</priority>
+					<hostingmigpriority>0</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>860</period>
+					<workload/>
+				</task>
+			</tasks>
+		</core1>
+		<core2>
+			<utilization>0.9036027819069272</utilization>
+			<tasks>
+				<total>7</total>
+				<task>
+					<ID>1</ID>
+					<criticality>HIGH</criticality>
+					<CHI>31.745686788790145</CHI>
+					<CLO>15.872843394395073</CLO>
+					<nominalutil>0.18673933405170673</nominalutil>
+					<deadline>170</deadline>
+					<reduceddead>54.038336305214514</reduceddead>
+					<jitter>115.96166369478549</jitter>
+					<migrating>False</migrating>
+					<priority>0</priority>
+					<hostingmigpriority>-1</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>170</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>9</ID>
+					<criticality>LOW</criticality>
+					<CHI>35.751622311020206</CHI>
+					<CLO>17.875811155510103</CLO>
+					<nominalutil>0.2553687307930015</nominalutil>
+					<deadline>70</deadline>
+					<reduceddead>64.2198987295332</reduceddead>
+					<jitter>5.780101270466805</jitter>
+					<migrating>False</migrating>
+					<priority>3</priority>
+					<hostingmigpriority>-1</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>70</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>8</ID>
+					<criticality>LOW</criticality>
+					<CHI>83.0926498818777</CHI>
+					<CLO>41.54632494093885</CLO>
+					<nominalutil>0.23081291633854917</nominalutil>
+					<deadline>180</deadline>
+					<reduceddead>153.78638532703567</reduceddead>
+					<jitter>26.213614672964333</jitter>
+					<migrating>False</migrating>
+					<priority>2</priority>
+					<hostingmigpriority>-1</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>180</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>3</ID>
+					<criticality>LOW</criticality>
+					<CHI>43.976218815835935</CHI>
+					<CLO>21.988109407917968</CLO>
+					<nominalutil>0.11572689162062089</nominalutil>
+					<deadline>190</deadline>
+					<reduceddead>97.8872165971078</reduceddead>
+					<jitter>92.1127834028922</jitter>
+					<migrating>False</migrating>
+					<priority>1</priority>
+					<hostingmigpriority>-1</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>190</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>4</ID>
+					<criticality>LOW</criticality>
+					<CHI>7.141729409970825</CHI>
+					<CLO>3.5708647049854125</CLO>
+					<nominalutil>0.051012352928363036</nominalutil>
+					<deadline>70</deadline>
+					<reduceddead>68.48769479753071</reduceddead>
+					<jitter>1.5123052024692987</jitter>
+					<migrating>False</migrating>
+					<priority>4</priority>
+					<hostingmigpriority>-1</hostingmigpriority>
+					<targetpriority>-1</targetpriority>
+					<period>70</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>6</ID>
+					<criticality>LOW</criticality>
+					<CHI>0.6969313630120921</CHI>
+					<CLO>0.34846568150604607</CLO>
+					<nominalutil>0.03484656815060461</nominalutil>
+					<deadline>10</deadline>
+					<reduceddead>10.0</reduceddead>
+					<jitter>0.0</jitter>
+					<migrating>True</migrating>
+					<priority>6</priority>
+					<hostingmigpriority>-1</hostingmigpriority>
+					<targetpriority>6</targetpriority>
+					<period>10</period>
+					<workload/>
+				</task>
+				<task>
+					<ID>2</ID>
+					<criticality>LOW</criticality>
+					<CHI>2.3276790419265048</CHI>
+					<CLO>1.1638395209632524</CLO>
+					<nominalutil>0.02909598802408131</nominalutil>
+					<deadline>40</deadline>
+					<reduceddead>39.65153431849395</reduceddead>
+					<jitter>0.34846568150604607</jitter>
+					<migrating>True</migrating>
+					<priority>5</priority>
+					<hostingmigpriority>-1</hostingmigpriority>
+					<targetpriority>5</targetpriority>
+					<period>40</period>
+					<workload/>
+				</task>
+			</tasks>
+		</core2>
+	</taskset>
 </tasksets>

@@ -8,8 +8,6 @@ with System.BB.Time;
 pragma Warnings (On);
 
 package Periodic_Tasks is
-
-  Experiment_Hyperperiod : Natural := 0  --  Nanoseconds 
   --  CPU_A  : constant CPU := CPU'First;
   --  CPU_B  : constant CPU := CPU'Last; 
 

@@ -10,6 +10,7 @@ with System.BB.Threads.Queues;
 with Core_Execution_Modes;
 pragma Warnings (On);
 
+with Single_Execution_Data;
 with Production_Workload;
 with Initial_Delay;
 
@@ -61,7 +62,7 @@ package body Periodic_Tasks is
 
    procedure Init is
       Next_Period   : constant Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);
-      Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Experiment_Hyperperiod);
+      Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Single_Execution_Data.Experiment_Hyperperiod);
    begin
       delay until Next_Period + Period_To_Add;
       Ada.Text_IO.Put_Line ("----------------------");
@@ -75,45 +76,18 @@ package body Periodic_Tasks is
       end loop;
    end Init;
 
-   ---------------------------------------------
-   --  Tasks allocation => start experiments  --
-   ---------------------------------------------
-
-   -------------
-   --  CPU 1  --
-   -------------
-
-   HC_1_1 : High_Crit (Pri => 40, Low_Critical_Budget => 100_000, High_Critical_Budget => 1_000_000, Workload => 50_000, Period => 700_000, CPU_Id => CPU_A);
+   ----------------------------
+   --  End_Task_Second_Core  --
+   ----------------------------
    
-   HC_1_2 : High_Crit (Pri => 35, Low_Critical_Budget => 100_000, High_Critical_Budget => 1_000_000, Workload => 1_000, Period => 550_000, CPU_Id => CPU_A);
-
-   --  LC_1_1 : Low_Crit (Pri => 20, Low_Critical_Budget => 300_000, Is_Migrable => False, Workload => 1, Period => 100_000, CPU_Id => CPU_A);
-
-   --  LC_1_2 : Low_Crit (Pri => 5, Low_Critical_Budget => 1_440_000, Is_Migrable => True, Workload => 1, Period => 100_000, CPU_Id => CPU_A);
-
-   --  LC_1_3 : Low_Crit (Pri => 24, Low_Critical_Budget => 1_440_000, Is_Migrable => True, Workload => 1, Period => 300_000, CPU_Id => CPU_A);
-
-   --  LC_1_4 : Low_Crit (Pri => 23, Low_Critical_Budget => 1_440_000, Is_Migrable => True, Workload => 1, Period => 300_000, CPU_Id => CPU_A);
-
-   -------------
-   --  CPU 2  --
-   -------------
-
-   --  HC_2_1 : High_Crit (Pri => 30, Low_Critical_Budget => 100_000_000, High_Critical_Budget => 500_000_000, Workload => 90_000_000, Period => 100_000_000, CPU_Id => CPU_B);
-   
-   --  HC_2_2 : High_Crit (Pri => 35, Low_Critical_Budget => 100_000, High_Critical_Budget => 1_000_000, Workload => 1, Period => 1_550_000, CPU_Id => CPU_B);
-
-   --  LC_2_1 : Low_Crit (Pri => 10, Low_Critical_Budget => 300_000, Is_Migrable => True, Workload => 1, Period => 1_000_000, CPU_Id => CPU_B);
-
-   --  LC_2_2 : Low_Crit (Pri => 15, Low_Critical_Budget => 140_000, Is_Migrable => False, Workload => 1, Period => 160_000, CPU_Id => CPU_B);
-
+   --  This task stucks second core's execution when current experiment should stops.
    task End_Task_Second_Core with 
          Priority => System.Priority'Last - 1,
          CPU      => CPU'Last;
 
    task body End_Task_Second_Core is
       Next_Period : constant Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);
-      Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Experiment_Hyperperiod);
+      Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Single_Execution_Data.Experiment_Hyperperiod);
    begin
       delay until Next_Period + Period_To_Add;
       loop

@@ -38,21 +38,22 @@ def save_taskset_as_Ada (experiment_id):
         Ada_Unit = ''
         Main_Unit = ''
 
-        taskset_name = 'E' + str(experiment_id) + '_' + approach + '_T' + str(taskset_id)
+        taskset_name = ('E' + str(experiment_id) + '_' + approach + '_T' + str(taskset_id)).lower()
 
         # Main generation
         main_name = 'main_' + taskset_name
         main_file_name = main_name + '.adb'
-        main_withed_united = 'with Taskset_' + taskset_name + ';\nwith System;\n\n' 
+        main_withed_units = 'with System;\nwith Periodic_Tasks;\n\nwith taskset_' + taskset_name + ';\n' 
+        main_unreferenced_units = 'pragma Unreferenced (taskset_'  + taskset_name + ');\n\n'
         main_procedure = 'procedure ' + main_name + ' is\n'
         main_decl_section = "    pragma Priority (System.Priority'Last);\n    pragma CPU (1);\n"
         main_body = 'begin\n    Periodic_Tasks.Init;\nend ' + main_name + ';'
         
-        Main_Unit += main_withed_united + main_procedure + main_decl_section + main_body
+        Main_Unit += main_withed_units + main_unreferenced_units +  main_procedure + main_decl_section + main_body
 
         taskset_dir = config.Ada_Paths[experiment_id][approach] + taskset_name + '/'
         os.mkdir(taskset_dir)
-        
+
         # dir containing src code
         src_dir = taskset_dir + 'src/'
         os.mkdir(src_dir)
@@ -60,15 +61,28 @@ def save_taskset_as_Ada (experiment_id):
         object_code_dir = taskset_dir + 'obj/'
         os.mkdir(object_code_dir)
 
+        # Single_Execution_Data unit generation.
+        # This unit contains specifics data for the current tasksets.
+        # E.g. Tasksets hyperperiod
+
+        single_execution_data_unit = ''
+        single_execution_data_unit += 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
+        single_execution_data_spec = '\tExperiment_Hyperperiod : Natural := ' + '1_000_000;\n\n'
+        single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
+
+        f = open(src_dir + 'single_execution_data.ads', 'w')
+        f.write(single_execution_data_unit)
+        f.close()
+
         # .gpr file project generation
-        project_file_name = main_name + '.gpr'
-        project = 'project ' + main_name + ' is\n\n'
+        project_file_name = taskset_name + '.gpr'
+        project = 'project ' + taskset_name + ' is\n\n'
         project += '\tfor Languages use ("ada");\n\tfor Main use ("' + main_file_name + '");\n\tfor Source_Dirs use ("src", "../../../common");\n\tfor Object_Dir use "obj";\n    for Runtime ("ada") use '
         runtime_dir = config.RUNTIME_DIR + ';\n'
         project += runtime_dir + '\tfor Target use "arm-eabi";\n\n'
         project += '\tpackage Compiler is\n        for Switches ("ada") use ("-g", "-gnatwa", "-gnatQ");\n    end Compiler;\n\n'
         project += '\tpackage Builder is\n        for Switches ("ada") use ("-g", "-O0");\n    end Builder;\n\n'
-        project += 'end ' + main_name + ';'
+        project += 'end ' + taskset_name + ';'
 
         f = open(taskset_dir + project_file_name, 'w')
         f.write(project)
@@ -98,12 +112,11 @@ def save_taskset_as_Ada (experiment_id):
 
         # Ada unit generation
 
-        withed_unit = 'with Periodic_Tasks;\n'
-        package_name = '\npackage body Taskset_' + taskset_name + ' is\nbegin\n\n'
-        set_hyperperiod = '  Periodic_Tasks.Experiment_Hyperperiod := ' + ' 1_000_000;\n\n'
-        file_name = 'Taskset_' + taskset_name + '.adb'
+        withed_unit = 'with Periodic_Tasks;\nuse Periodic_Tasks;\n'
+        package_name = '\npackage taskset_' + taskset_name + ' is\n\n'
+        file_name = 'taskset_' + taskset_name + '.ads'
 
-        Ada_Unit += withed_unit + package_name + set_hyperperiod
+        Ada_Unit += withed_unit + package_name
 
         cores_XML = [taskset.find('core1'), taskset.find('core2')]
         for core_XML in cores_XML:
@@ -119,14 +132,14 @@ def save_taskset_as_Ada (experiment_id):
               current_task += 'Low_Crit ('
             
             current_task += 'Pri => ' + task_XML.find('priority').text + ', '
-            current_task += 'Low_Critical_Budget => ' + task_XML.find('CLO').text + ', '
+            current_task += 'Low_Critical_Budget => 1, ' # + task_XML.find('CLO').text + ', '
 
             if task_XML.find('criticality').text == 'HIGH':
-              current_task += 'High_Critical_Budget => ' + task_XML.find('CHI').text + ', '
+              current_task += 'High_Critical_Budget => 1, ' # + task_XML.find('CHI').text + ', '
             else:
               current_task += 'Is_Migrable => ' + task_XML.find('migrating').text + ', '
             
-            current_task += 'Workload => 0, ' # + task_XML.find('workload').text + ', '
+            current_task += 'Workload => 1, ' # + task_XML.find('workload').text + ', '
             current_task += 'Period => ' + task_XML.find('period').text + ', '
             current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
 
@@ -136,7 +149,7 @@ def save_taskset_as_Ada (experiment_id):
             
             # print(current_task)
 
-        Ada_Unit += '\nend ' + taskset_name + ';\n'
+        Ada_Unit += '\nend taskset_' + taskset_name + ';\n'
         # create taskset unit Ada file
         f = open(src_dir + file_name, 'w')
         f.write(Ada_Unit)
