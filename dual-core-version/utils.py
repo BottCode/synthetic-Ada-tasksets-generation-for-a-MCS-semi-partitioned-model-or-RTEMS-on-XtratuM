@@ -345,6 +345,7 @@ def print_taskset (core_1, core_2):
 
 def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utilization, criticality_factor, hi_crit_proportion, taskset_id):
   assert(len(config.last_time_on_core_i['c1']) + len(config.last_time_on_core_i['c2']) == total), "Wrong number of scheduled tasks"
+  # print_taskset (config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
   cores = ['c1', 'c2']
   # is there at least one migrating task on c_i?
   mig_on_c_i = {'c1': False, 'c2': False}
@@ -444,7 +445,10 @@ def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utiliza
       config.last_time_on_core_i_with_additional_migrating_task['c1'] = []
 
   if mig_on_c_i['c1'] or mig_on_c_i['c2']:
+    # print(approach)
     # check_order_preservation(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
+    # print_taskset (config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
+    # print("---")
     save_taskset_as_XML(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'], approach, experiment_id, taskset_utilization, criticality_factor, hi_crit_proportion, util_on_core_i['c1'], util_on_core_i['c2'], taskset_id)
 
 # It checks if c_i_steady has the same "tasks order relationship" of c_i_with_mig

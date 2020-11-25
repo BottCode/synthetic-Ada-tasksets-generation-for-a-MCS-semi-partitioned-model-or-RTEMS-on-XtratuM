@@ -8,18 +8,6 @@ import copy
 import sys
 import utils
 
-def print_XML():
-  # # print("with no mig pri")
-  utils.print_taskset(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
-  
-  if len(config.last_time_on_core_i_with_additional_migrating_task['c1']) + len(config.last_time_on_core_i_with_additional_migrating_task['c2']) > 0:
-    # # print("with MIG pri")
-    # if config.where_last_mod_mig:
-      # # print(config.where_last_mod_mig)
-    utils.print_taskset(config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
-  
-  # # print("-----")
-
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
   if config.CHECK_NO_MIGRATION:
@@ -86,7 +74,7 @@ def run_instance (n, p, f, U, experiment_id):
     select_bin_packing_algorithm("BEST_FIT_BP")
     T = copy.deepcopy(taskset)
     if verify_model_1(T, fetched_approach):
-      # print("taskset schedulable with semi1 BF")
+      # print("taskset schedulable with semi1BF")
       utils.check_size_taskset_with_mig(n, 'semi1BF', experiment_id, U, f, p, taskset_id)
       # print_XML()
       # # print(T)
@@ -98,7 +86,7 @@ def run_instance (n, p, f, U, experiment_id):
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[2] = True
-      # print("Schedulable with semi1 FF")
+      # print("Schedulable with semi1FF")
       utils.check_size_taskset_with_mig(n, 'semi1FF', experiment_id, U, f, p, taskset_id)
       # print_XML()
   
@@ -107,7 +95,7 @@ def run_instance (n, p, f, U, experiment_id):
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[3] = True
-      # print("Schedulable with semi1 WF")
+      # print("Schedulable with semi1WF")
       utils.check_size_taskset_with_mig(n, 'semi1WF', experiment_id, U, f, p, taskset_id)
       # print_XML()
   
@@ -117,16 +105,16 @@ def run_instance (n, p, f, U, experiment_id):
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[4] = True
-      # print("Schedulable with semi2 BF")
+      # print("Schedulable with semi2BF")
       utils.check_size_taskset_with_mig(n, 'semi2BF', experiment_id, U, f, p, taskset_id)
-      print_XML()
+      # print_XML()
   
   if config.CHECK_SEMI_2_FF:
     select_bin_packing_algorithm("FIRST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[5] = True
-      # print("Schedulable with semi2 FF")
+      # print("Schedulable with semi2FF")
       utils.check_size_taskset_with_mig(n, 'semi2FF', experiment_id, U, f, p, taskset_id)
       # print_XML()
   
@@ -135,7 +123,7 @@ def run_instance (n, p, f, U, experiment_id):
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
       taskset_schedulability[6] = True
-      # print("Schedulable with semi2 WF")
+      # print("Schedulable with semi2WF")
       utils.check_size_taskset_with_mig(n, 'semi2WF', experiment_id, U, f, p, taskset_id)
       # print_XML()
   
