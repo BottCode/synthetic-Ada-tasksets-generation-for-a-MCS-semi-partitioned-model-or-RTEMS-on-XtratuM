@@ -112,17 +112,6 @@ def save_taskset_as_Ada (experiment_id):
         f.write(makefile)
         f.close()
 
-        # flashing script and board init file
-        
-        template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
-        cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
-        copyfile(template_cora_xsdb_file, taskset_dir + 'cora_xsdb.ini')
-        copyfile(cora_ps7_init_file, taskset_dir + 'cora_ps7_init.tcl')
-
-        f = open(taskset_dir + 'cora_xsdb.ini', 'a')
-        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon')
-        f.close()
-
         # Ada taskset unit generation
 
         withed_unit = 'with Periodic_Tasks;\nuse Periodic_Tasks;\n'
@@ -206,6 +195,17 @@ def save_taskset_as_Ada (experiment_id):
 
         f = open(src_dir + 'single_execution_data.ads', 'w')
         f.write(single_execution_data_unit)
+        f.close()
+
+        # flashing script and board init file
+        
+        template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
+        cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
+        copyfile(template_cora_xsdb_file, taskset_dir + 'cora_xsdb.ini')
+        copyfile(cora_ps7_init_file, taskset_dir + 'cora_ps7_init.tcl')
+
+        f = open(taskset_dir + 'cora_xsdb.ini', 'a')
+        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter 7000')
         f.close()
 
 def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2, taskset_id):
