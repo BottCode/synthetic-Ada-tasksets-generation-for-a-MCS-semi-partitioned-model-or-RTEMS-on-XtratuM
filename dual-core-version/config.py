@@ -17,14 +17,14 @@ NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
 RUN_FIRST_TEST = True
-RUN_SECOND_TEST = True
-RUN_THIRD_TEST = True
-RUN_FOURTH_TEST = True
+RUN_SECOND_TEST = False
+RUN_THIRD_TEST = False
+RUN_FOURTH_TEST = False
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
 BEST_FIT_BP  = True 
-WORST_FIT_BP = False
+WORST_FIT_BP = True
 
 # Select version of Vestal's algorithm to use
 VESTAL_CLASSIC = False
@@ -33,7 +33,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 100
+NUMBER_OF_TESTS = 3
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
@@ -197,4 +197,4 @@ Ada_Paths = {
 
 GLOBAL_TASKSET_ID = 0
 
-RUNTIME_DIR = '""'
+RUNTIME_DIR = '"/home/mattia/UNI/ThesisProject/zynq7000_mcs/runtime/arm-eabi/lib/gnat/ravenscar_full_zynq7000"'

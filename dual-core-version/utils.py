@@ -8,6 +8,27 @@ import xml.dom.minidom
 
 from shutil import copyfile, rmtree
 
+from math import gcd
+
+def compute_hyperperiod (periods):
+  lcm = periods[0]
+  for i in periods[1:]:
+    lcm = lcm*i//gcd(lcm, i)
+  return lcm
+
+# cast a period from string to an integer (microseconds).
+# check XML to see how <CHI> and <CLO> are represented.
+# From that shape, we need microseconds.
+def to_microseconds_for_Ada (period):
+  number_of_digits = 7
+  final_number = int (float(period) * 10000)
+  #print(final_number)
+  #i = len(final_number) - 1
+  #for c in reversed (final_number):
+  #  print(c)
+
+  return final_number
+
 def CLEAN_ALL():
   for i in range(4):
     clean_XML_and_Ada_Files(i+1)
@@ -27,7 +48,12 @@ def clean_XML_and_Ada_Files(experiment_id):
   
 
 def save_taskset_as_Ada (experiment_id):
+  q = 41
   string_tasks = []
+
+  periods_c1 = [] # needed for hyperperiod computations
+  periods_c2 = []
+
   for approach in config.XML_Files[experiment_id]:
     tree = ET.parse(config.XML_Files[experiment_id][approach])
     root = tree.getroot()
@@ -60,19 +86,6 @@ def save_taskset_as_Ada (experiment_id):
         # dir containing compiled code
         object_code_dir = taskset_dir + 'obj/'
         os.mkdir(object_code_dir)
-
-        # Single_Execution_Data unit generation.
-        # This unit contains specifics data for the current tasksets.
-        # E.g. Tasksets hyperperiod
-
-        single_execution_data_unit = ''
-        single_execution_data_unit += 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
-        single_execution_data_spec = '\tExperiment_Hyperperiod : Natural := ' + '1_000_000;\n\n'
-        single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
-
-        f = open(src_dir + 'single_execution_data.ads', 'w')
-        f.write(single_execution_data_unit)
-        f.close()
 
         # .gpr file project generation
         project_file_name = taskset_name + '.gpr'
@@ -110,7 +123,7 @@ def save_taskset_as_Ada (experiment_id):
         f.write('dow ' + 'obj/main_' + taskset_name + '\ncon')
         f.close()
 
-        # Ada unit generation
+        # Ada taskset unit generation
 
         withed_unit = 'with Periodic_Tasks;\nuse Periodic_Tasks;\n'
         package_name = '\npackage taskset_' + taskset_name + ' is\n\n'
@@ -131,17 +144,37 @@ def save_taskset_as_Ada (experiment_id):
             else:
               current_task += 'Low_Crit ('
             
-            current_task += 'Pri => ' + task_XML.find('priority').text + ', '
-            current_task += 'Low_Critical_Budget => 1, ' # + task_XML.find('CLO').text + ', '
+            if core_XML == taskset.find('core2'):
+              current_task += 'Pri => ' + str(int(task_XML.find('priority').text)+q) + ', '
+              current_task += 'Hosting_Migrating_Tasks_Priority => ' + str(int(task_XML.find('hostingmigpriority').text)+q) + ', '
+            else:
+              current_task += 'Pri => ' + task_XML.find('priority').text + ', '
+              current_task += 'Hosting_Migrating_Tasks_Priority => ' + task_XML.find('hostingmigpriority').text + ', '
+
+            if task_XML.find('criticality').text == 'LOW':
+              if core_XML == taskset.find('core1'):
+                current_task += 'On_Target_Core_Priority => ' + str(int(task_XML.find('targetpriority').text)+q) + ', '
+              else:
+                current_task += 'On_Target_Core_Priority => ' + task_XML.find('targetpriority').text + ', '
+            
+            current_task += 'Low_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CLO').text)) + ', '
 
             if task_XML.find('criticality').text == 'HIGH':
-              current_task += 'High_Critical_Budget => 1, ' # + task_XML.find('CHI').text + ', '
+              current_task += 'High_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CHI').text)) + ', '
             else:
               current_task += 'Is_Migrable => ' + task_XML.find('migrating').text + ', '
             
             current_task += 'Workload => 1, ' # + task_XML.find('workload').text + ', '
-            current_task += 'Period => ' + task_XML.find('period').text + ', '
+            current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ', '
             current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
+
+            '''if bool(task_XML.find('migrating').text) == True:
+              periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))
+              periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))
+            elif core_XML == taskset.find('core1'):
+              periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))
+            elif core_XML == taskset.find('core2'):
+              periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))'''
 
             Ada_Unit += current_task + '\n'
 
@@ -157,6 +190,22 @@ def save_taskset_as_Ada (experiment_id):
         # create main unit Ada file
         f = open(src_dir + main_file_name, 'w')
         f.write(Main_Unit)
+        f.close()
+
+        # Single_Execution_Data unit generation.
+        # This unit contains specifics data for the current tasksets.
+        # E.g. Tasksets hyperperiod
+
+        single_execution_data_unit = ''
+        single_execution_data_unit += 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
+        # single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(compute_hyperperiod(periods_c1)) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(compute_hyperperiod(periods_c2)) + ';\n\n'
+        single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := 4_567_000;\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := 5_000_000;\n\n'
+
+        single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
+        single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
+
+        f = open(src_dir + 'single_execution_data.ads', 'w')
+        f.write(single_execution_data_unit)
         f.close()
 
 def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2, taskset_id):

@@ -4,16 +4,16 @@ import multiprocessing
 PARALLEL_JOBS = multiprocessing.cpu_count()
 
 # Enable/disable models to check
-CHECK_NO_MIGRATION = False
+CHECK_NO_MIGRATION = True
 CHECK_MODEL_1 = True
 CHECK_MODEL_2 = False
 CHECK_MODEL_3 = False
 
 # Enable/disable tests to run
-RUN_FIRST_TEST = True
+RUN_FIRST_TEST =  False
 RUN_SECOND_TEST = False
 RUN_THIRD_TEST = False
-RUN_FOURTH_TEST = False
+RUN_FOURTH_TEST = True
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = True
@@ -26,7 +26,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 10
+NUMBER_OF_TESTS = 5
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results/'
