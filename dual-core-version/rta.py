@@ -17,7 +17,7 @@ def reset_considered (cores):
 def first_fit_bin_packing (task, cores):
   for c in cores:
     core = cores[c]
-    if not core['considered'] and core['utilization'] + task['U'] <= 1:
+    if not core['considered'] and core['utilization'] <= 1:
       return c
   return None
 
@@ -28,7 +28,7 @@ def worst_fit_bin_packing (task, cores):
   result = None
   for c in cores:
     core = cores[c]
-    if not core['considered'] and core['utilization'] < min_utilization:
+    if not core['considered'] and core['utilization'] < min_utilization and core['utilization'] <= 1:
       result = c
       min_utilization = core['utilization']
   return result
@@ -42,7 +42,7 @@ def best_fit_bin_packing (task, cores):
   for c in cores:
     core = cores[c]
     # if not core['considered'] and core['utilization'] + task['U'] >= max_utilization and core['utilization'] + task['U'] <= 1:
-    if not core['considered'] and core['utilization'] > max_utilization and core['utilization'] + task['U']<= 1:
+    if not core['considered'] and core['utilization'] > max_utilization and core['utilization'] <= 1:
       result = c
       max_utilization = core['utilization']
   return result
