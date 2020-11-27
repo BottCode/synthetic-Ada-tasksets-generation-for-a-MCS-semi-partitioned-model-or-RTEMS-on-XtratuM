@@ -10,7 +10,15 @@ from shutil import copyfile, rmtree
 
 from math import gcd
 
+def print_hyperperiod (hyperperiod):
+  microseconds = hyperperiod
+  seconds = microseconds / 1000000
+  minutes = seconds / 60
+  hours = minutes / 60
+  print ("microseconds => ", microseconds, ", seconds => ", seconds, ", minutes => ", minutes, ", hours => ", hours)
+
 def compute_hyperperiod (periods):
+  # print(periods)
   lcm = periods[0]
   for i in periods[1:]:
     lcm = lcm*i//gcd(lcm, i)
@@ -20,8 +28,8 @@ def compute_hyperperiod (periods):
 # check XML to see how <CHI> and <CLO> are represented.
 # From that shape, we need microseconds.
 def to_microseconds_for_Ada (period):
-  number_of_digits = 7
-  final_number = int (float(period) * 10000)
+  multiplier = 100
+  final_number = int (float(period) * multiplier)
   #print(final_number)
   #i = len(final_number) - 1
   #for c in reversed (final_number):
@@ -51,14 +59,14 @@ def save_taskset_as_Ada (experiment_id):
   q = 41
   string_tasks = []
 
-  periods_c1 = [] # needed for hyperperiod computations
-  periods_c2 = []
-
   for approach in config.XML_Files[experiment_id]:
     tree = ET.parse(config.XML_Files[experiment_id][approach])
     root = tree.getroot()
 
     for taskset in root.findall('taskset'):
+      periods_c1 = [] # needed for hyperperiod computations
+      periods_c2 = []
+
       taskset_id = int(taskset[0].text)
       if taskset_id != -1:
         Ada_Unit = ''
@@ -157,13 +165,14 @@ def save_taskset_as_Ada (experiment_id):
             current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ', '
             current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
 
-            '''if bool(task_XML.find('migrating').text) == True:
-              periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))
-              periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))
-            elif core_XML == taskset.find('core1'):
-              periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))
-            elif core_XML == taskset.find('core2'):
-              periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text) / 100))'''
+            if task_XML.find('migrating').text == "True":
+              periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
+              periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
+            else:
+              if core_XML == taskset.find('core1'):
+                periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
+              else:
+                periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
 
             Ada_Unit += current_task + '\n'
 
@@ -184,11 +193,20 @@ def save_taskset_as_Ada (experiment_id):
         # Single_Execution_Data unit generation.
         # This unit contains specifics data for the current tasksets.
         # E.g. Tasksets hyperperiod
+        
+        hyperperiod_core_1 = compute_hyperperiod(periods_c1)
+        hyperperiod_core_2 = compute_hyperperiod(periods_c2)
+        print(periods_c1)
+        print_hyperperiod(hyperperiod_core_1)
+        print(periods_c2)
+        print_hyperperiod(hyperperiod_core_2)
+        print("---")
 
         single_execution_data_unit = ''
         single_execution_data_unit += 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
-        # single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(compute_hyperperiod(periods_c1)) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(compute_hyperperiod(periods_c2)) + ';\n\n'
-        single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := 4_567_000;\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := 5_000_000;\n\n'
+        single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(hyperperiod_core_1) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(hyperperiod_core_2) + ';\n\n'
+
+        #single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := 4_567_000;\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := 5_000_000;\n\n'
 
         single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
         single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
@@ -205,7 +223,7 @@ def save_taskset_as_Ada (experiment_id):
         copyfile(cora_ps7_init_file, taskset_dir + 'cora_ps7_init.tcl')
 
         f = open(taskset_dir + 'cora_xsdb.ini', 'a')
-        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter 7000')
+        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+1000))
         f.close()
 
 def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2, taskset_id):
