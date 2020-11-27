@@ -133,6 +133,8 @@ def save_taskset_as_Ada (experiment_id):
             else:
               current_task += 'Low_Crit ('
             
+            current_task += 'Id => ' + task_XML.find('ID').text + ', '
+
             if core_XML == taskset.find('core2'):
               current_task += 'Pri => ' + str(int(task_XML.find('priority').text)+q) + ', '
               current_task += 'Hosting_Migrating_Tasks_Priority => ' + str(int(task_XML.find('hostingmigpriority').text)+q) + ', '
@@ -155,6 +157,7 @@ def save_taskset_as_Ada (experiment_id):
             
             current_task += 'Workload => 1, ' # + task_XML.find('workload').text + ', '
             current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ', '
+            current_task += 'Reduced_Deadline => ' + str(to_microseconds_for_Ada (task_XML.find('reduceddead').text)) + ', '
             current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
 
             '''if bool(task_XML.find('migrating').text) == True:
@@ -293,7 +296,7 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
       deadline_XML.text = str(task['D'])
 
       reduceddead_XML = ET.SubElement(task_XML, 'reduceddead')
-      reduceddead_XML.text = str(task['D1']) if 'D1' in task else ""
+      reduceddead_XML.text = str(task['D1']) if 'D1' in task else str(task['D'])
 
       jitter_XML = ET.SubElement(task_XML, 'jitter')
       jitter_XML.text = str(task['J'])
