@@ -6,7 +6,7 @@ import config
 
 # Default values taken from "Techniques For The Synthesis Of Multiprocessor Tasksets" by Emberson, et. al
 # cfr. https://www.researchgate.net/publication/241677949_Techniques_For_The_Synthesis_Of_Multiprocessor_Tasksets
-def log_uniform (n, Tmin = 40, Tmax = 160, Tg = 10):
+def log_uniform (n, Tmin = 50, Tmax = 250, Tg = 10):
   R = numpy.random.uniform(math.log(Tmin), math.log(Tmax + Tg), n)
   T = []
   for ri in R:

@@ -28,7 +28,7 @@ def compute_hyperperiod (periods):
 # check XML to see how <CHI> and <CLO> are represented.
 # From that shape, we need microseconds.
 def to_microseconds_for_Ada (period):
-  multiplier = 100
+  multiplier = 1000
   final_number = int (float(period) * multiplier)
   #print(final_number)
   #i = len(final_number) - 1
@@ -56,7 +56,7 @@ def clean_XML_and_Ada_Files(experiment_id):
   
 
 def save_taskset_as_Ada (experiment_id):
-  q = 41
+  q = 0
   string_tasks = []
 
   for approach in config.XML_Files[experiment_id]:
@@ -67,12 +67,12 @@ def save_taskset_as_Ada (experiment_id):
       periods_c1 = [] # needed for hyperperiod computations
       periods_c2 = []
 
-      taskset_id = int(taskset[0].text)
+      taskset_id = int(taskset.find('tasksetid').text)
       if taskset_id != -1:
         Ada_Unit = ''
         Main_Unit = ''
 
-        taskset_name = ('E' + str(experiment_id) + '_' + approach + '_T' + str(taskset_id)).lower()
+        taskset_name = taskset.find('executionid').text
 
         # Main generation
         main_name = 'main_' + taskset_name
@@ -199,19 +199,16 @@ def save_taskset_as_Ada (experiment_id):
         
         hyperperiod_core_1 = compute_hyperperiod(periods_c1)
         hyperperiod_core_2 = compute_hyperperiod(periods_c2)
-        print(periods_c1)
-        print_hyperperiod(hyperperiod_core_1)
-        print(periods_c2)
-        print_hyperperiod(hyperperiod_core_2)
-        print("---")
 
         single_execution_data_unit = ''
-        single_execution_data_unit += 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
-        single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(hyperperiod_core_1) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(hyperperiod_core_2) + ';\n\n'
-
-        #single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := 4_567_000;\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := 5_000_000;\n\n'
+        single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
+        single_execution_data_unit += single_execution_data_withed_package + 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
+        single_execution_data_spec = '\tExperiment_Hyperperiods : array (CPU) of Natural := (CPU\'First => ' + str(hyperperiod_core_1) + ', CPU\'Last => ' + str(hyperperiod_core_2) + ');\n\n'
+        # single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(hyperperiod_core_1) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(hyperperiod_core_2) + ';\n\n'
 
         single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
+
+        single_execution_data_spec += '\tId_Execution : String := "' + taskset_name + '";\n\n'
         single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
 
         f = open(src_dir + 'single_execution_data.ads', 'w')
@@ -255,6 +252,9 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
 
   tasksetid_XML = ET.SubElement(taskset_selector_XML, 'tasksetid')
   tasksetid_XML.text = str(taskset_id)
+
+  executionid_XML = ET.SubElement(taskset_selector_XML, 'executionid')
+  executionid_XML.text = ('E' + str(experiment_id) + '_' + approach + '_T' + str(taskset_id)).lower()
 
   size_XML = ET.SubElement(taskset_selector_XML, 'size')
   size_XML.text = str(len(c1_steady) + len(c2_steady))
