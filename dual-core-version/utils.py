@@ -197,8 +197,8 @@ def save_taskset_as_Ada (experiment_id):
         # This unit contains specifics data for the current tasksets.
         # E.g. Tasksets hyperperiod
         
-        hyperperiod_core_1 = int(compute_hyperperiod(periods_c1) / 100)
-        hyperperiod_core_2 = int(compute_hyperperiod(periods_c2) / 100)
+        hyperperiod_core_1 = int(compute_hyperperiod(periods_c1) / 1000)
+        hyperperiod_core_2 = int(compute_hyperperiod(periods_c2) / 1000)
 
         single_execution_data_unit = ''
         single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
