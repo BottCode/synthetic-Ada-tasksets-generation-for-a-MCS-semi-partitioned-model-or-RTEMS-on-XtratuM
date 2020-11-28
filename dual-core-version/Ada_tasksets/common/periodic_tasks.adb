@@ -80,10 +80,16 @@ package body Periodic_Tasks is
       --  Ada.Text_IO.Put_Line ("--  END EXPERIMENT  --");
       --  Ada.Text_IO.Put_Line ("----------------------");
 
+      Ada.Text_IO.Put_Line ("<execution>");
+
       Ada.Text_IO.Put_Line ("<executionid>" & Single_Execution_Data.Id_Execution & "</executionid>");
       Ada.Text_IO.Put_Line ("<experimentid>" & Integer'Image (Single_Execution_Data.Id_Experiment) & "</experimentid>");
       Ada.Text_IO.Put_Line ("<approach>" & Single_Execution_Data.Approach & "</approach>");
       Ada.Text_IO.Put_Line ("<tasksetid>" & Integer'Image (Single_Execution_Data.Taskset_Id) & "</tasksetid>");
+      Ada.Text_IO.Put_Line ("<tasksetsize>" & Single_Execution_Data.Taskset_Size & "</tasksetsize>");
+      Ada.Text_IO.Put_Line ("<tasksetutilization>" & Single_Execution_Data.Taskset_Utilization & "</tasksetutilization>");
+      Ada.Text_IO.Put_Line ("<criticalityfactor>" & Single_Execution_Data.Criticality_Factor & "</criticalityfactor>");
+      Ada.Text_IO.Put_Line ("<perc>" & Single_Execution_Data.HI_Crit_Proportion & "</perc>");
 
       System.BB.Threads.Queues.Print_Tasks_Log;
       Core_Execution_Modes.Print_CPUs_Log;

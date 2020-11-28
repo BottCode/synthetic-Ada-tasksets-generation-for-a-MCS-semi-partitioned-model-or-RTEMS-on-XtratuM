@@ -25,6 +25,7 @@ def create_chart (results, x_label, y_label, filename):
   if config.CHECK_SEMI_2_WF: 
     data_to_plot.append({'label': 'SEMI-2 WF', 'data': results[6]})
 
+  # print(data_to_plot)
   plot_data(
     data_to_plot,
     x_label,

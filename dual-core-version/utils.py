@@ -197,8 +197,8 @@ def save_taskset_as_Ada (experiment_id):
         # This unit contains specifics data for the current tasksets.
         # E.g. Tasksets hyperperiod
         
-        hyperperiod_core_1 = compute_hyperperiod(periods_c1)
-        hyperperiod_core_2 = compute_hyperperiod(periods_c2)
+        hyperperiod_core_1 = int(compute_hyperperiod(periods_c1) / 100)
+        hyperperiod_core_2 = int(compute_hyperperiod(periods_c2) / 100)
 
         single_execution_data_unit = ''
         single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
@@ -209,6 +209,17 @@ def save_taskset_as_Ada (experiment_id):
         single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
 
         single_execution_data_spec += '\tId_Execution : String := "' + taskset_name + '";\n\n'
+
+        data_for_plotting = '\t--  Needed to plot diagrams. These data are stored as strings in order to avoid issue related\n'
+        data_for_plotting += '\t--  to differents types representations in differents languages (Python and Ada).\n'
+        taskset_size = str(taskset.find('size').text)
+        taskset_utilization = str(taskset.find('tasksetutilization').text)
+        criticality_factor = str(taskset.find('criticalityfactor').text)
+        hi_crit_proportion = str(taskset.find('perc').text)
+        
+        data_for_plotting += '\tTaskset_Size : String := "' + taskset_size + '";\n\tTaskset_Utilization : String := "' + taskset_utilization + '";\n\tCriticality_Factor : String := "' + criticality_factor + '";\n\tHI_Crit_Proportion : String := "' + hi_crit_proportion + '";\n\n'
+
+        single_execution_data_spec += data_for_plotting
         single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
 
         f = open(src_dir + 'single_execution_data.ads', 'w')
