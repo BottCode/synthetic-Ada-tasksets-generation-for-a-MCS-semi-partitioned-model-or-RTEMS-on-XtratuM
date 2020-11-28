@@ -34,8 +34,34 @@ def to_microseconds_for_Ada (period):
   #i = len(final_number) - 1
   #for c in reversed (final_number):
   #  print(c)
-
   return final_number
+
+def microseconds_to_kilowhetstone_for_ravenscar_runtime (microseconds):
+  multiplier = 0
+  divider = 0
+  # According to some evaluations:
+  #  - 13 KW    => 100 microseconds    +/- 3.5  microseconds
+  #  - 132 KW   => 1000 microseconds   +/- 3.6  microseconds
+  #  - 1325 KW  => 10000 microseconds  +/- 3.6  microseconds
+  #  - 13258 KW => 100000 microseconds +/- 3.75 microseconds
+
+  if microseconds < 1000:
+    multiplier = 13
+    divider = 100
+  elif microseconds < 10000:
+    multiplier = 132
+    divider = 1000
+  elif microseconds < 100000:
+    multiplier = 1325
+    divider = 10000
+  else:
+    multiplier = 13258
+    divider = 100000
+  
+  result = int( (microseconds/divider) * multiplier)
+  return result
+  
+
 
 def CLEAN_ALL():
   for i in range(4):
@@ -138,8 +164,10 @@ def save_taskset_as_Ada (experiment_id):
 
             if task_XML.find('criticality').text == 'HIGH':
               current_task += 'High_Crit ('
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CHI').text)))
             else:
               current_task += 'Low_Crit ('
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
             
             current_task += 'Id => ' + task_XML.find('ID').text + ', '
 
@@ -163,7 +191,7 @@ def save_taskset_as_Ada (experiment_id):
             else:
               current_task += 'Is_Migrable => ' + task_XML.find('migrating').text + ', '
             
-            current_task += 'Workload => 1, ' # + task_XML.find('workload').text + ', '
+            current_task += 'Workload => ' + str(workload) + ', ' # + task_XML.find('workload').text + ', '
             current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ', '
             current_task += 'Reduced_Deadline => ' + str(to_microseconds_for_Ada (task_XML.find('reduceddead').text)) + ', '
             current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
