@@ -7,6 +7,7 @@ with System.BB.Time;
 use System.BB.Time;
 with System.Task_Primitives.Operations;
 with System.BB.Threads.Queues;
+with System.OS_Interface;
 with Core_Execution_Modes;
 pragma Warnings (On);
 
@@ -34,12 +35,17 @@ package body Periodic_Tasks is
    task body Low_Crit is
       Next_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);
       Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Period);
+      I : Natural := 0;
    begin
       STPO.Initialize_LO_Crit_Task (STPO.Self, Id, Hosting_Migrating_Tasks_Priority, On_Target_Core_Priority,
                                     System.BB.Time.Microseconds (Low_Critical_Budget), Period, Reduced_Deadline, Is_Migrable);
       loop
          delay until Next_Period;
-         --  Ada.Text_IO.Put_Line ("Task " & Integer'Image (System.BB.Threads.Queues.Running_Thread.Base_Priority) & " (belonging to CPU n."  & CPU_Range'Image (System.BB.Threads.Queues.Running_Thread.Base_CPU) & ") is executing on CPU n. " & CPU_Range'Image (System.BB.Threads.Queues.Running_Thread.Active_CPU));
+         if I rem 18 = 0 and False then
+            Production_Workload.Small_Whetstone (Workload);
+         end if;
+
+         I := I + 1;
          Production_Workload.Small_Whetstone (Workload);
          Next_Period := Next_Period + Period_To_Add;
       end loop;
@@ -56,10 +62,11 @@ package body Periodic_Tasks is
    begin
       STPO.Initialize_HI_Crit_Task
          (STPO.Self, Id, Hosting_Migrating_Tasks_Priority, System.BB.Time.Microseconds (Low_Critical_Budget), System.BB.Time.Microseconds (High_Critical_Budget), Period);
-
+      
       loop
          delay until Next_Period;
-         if I rem 2 = 0 then
+         
+         if I rem 18 = 0 and False then
             Production_Workload.Small_Whetstone (Workload);
          end if;
          I := I + 1;

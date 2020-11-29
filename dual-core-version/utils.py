@@ -18,10 +18,11 @@ def print_hyperperiod (hyperperiod):
   print ("microseconds => ", microseconds, ", seconds => ", seconds, ", minutes => ", minutes, ", hours => ", hours)
 
 def compute_hyperperiod (periods):
-  # print(periods)
+  print("p:", periods)
   lcm = periods[0]
   for i in periods[1:]:
     lcm = lcm*i//gcd(lcm, i)
+  print(lcm)
   return lcm
 
 # cast a period from string to an integer (microseconds).
@@ -225,8 +226,8 @@ def save_taskset_as_Ada (experiment_id):
         # This unit contains specifics data for the current tasksets.
         # E.g. Tasksets hyperperiod
         
-        hyperperiod_core_1 = int(compute_hyperperiod(periods_c1) / 1000)
-        hyperperiod_core_2 = int(compute_hyperperiod(periods_c2) / 1000)
+        hyperperiod_core_1 = int(compute_hyperperiod(periods_c1))
+        hyperperiod_core_2 = int(compute_hyperperiod(periods_c2))
 
         single_execution_data_unit = ''
         single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 

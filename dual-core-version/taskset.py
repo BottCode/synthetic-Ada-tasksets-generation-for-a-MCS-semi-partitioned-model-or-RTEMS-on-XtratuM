@@ -3,6 +3,7 @@ import math
 import random
 import functools
 import config
+import perale_taskset_generator
 
 # Default values taken from "Techniques For The Synthesis Of Multiprocessor Tasksets" by Emberson, et. al
 # cfr. https://www.researchgate.net/publication/241677949_Techniques_For_The_Synthesis_Of_Multiprocessor_Tasksets
@@ -51,11 +52,19 @@ def sort_tasks_criticality (t1, t2):
 # maxU -> Total taskset utilization
 def generate_taskset (n, p, f, maxU):
   # print (n)
+  U = []
+  T = []
+
   config.GLOBAL_TASKSET_ID += 1
   HI_tot = n * p
   LO_tot = n - HI_tot
+  t_perale = perale_taskset_generator.create_taskset_hyper_113400000_10_100(n, maxU, 1, 2)
+
+  for t in t_perale[0]:
+    T.append(t[2]/1000)
+
   U = UUnifast_discard(n, maxU)
-  T = log_uniform(n)
+  #T = log_uniform(n)
   taskset = []
   for i in range(n):
     new_task = {
