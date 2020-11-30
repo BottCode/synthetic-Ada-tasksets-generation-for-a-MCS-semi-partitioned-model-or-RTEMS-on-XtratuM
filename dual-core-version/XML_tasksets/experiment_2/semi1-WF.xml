@@ -4,7 +4,7 @@
     <taskset>
         <executionid></executionid>
         <tasksetid>-1</tasksetid>
-        <size></size> <!-- number of tasks in this taskset -->
+        <tasksetsize></tasksetsize> <!-- number of tasks in this taskset -->
         <tasksetutilization></tasksetutilization> <!-- total util for this tasket -->
         <criticalityfactor></criticalityfactor>
         <perc></perc> <!-- probability P to generate an HI-crit task -->

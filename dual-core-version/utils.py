@@ -18,11 +18,11 @@ def print_hyperperiod (hyperperiod):
   print ("microseconds => ", microseconds, ", seconds => ", seconds, ", minutes => ", minutes, ", hours => ", hours)
 
 def compute_hyperperiod (periods):
-  print("p:", periods)
+  # print("p:", periods)
   lcm = periods[0]
   for i in periods[1:]:
     lcm = lcm*i//gcd(lcm, i)
-  print(lcm)
+  # print(lcm)
   return lcm
 
 # cast a period from string to an integer (microseconds).
@@ -241,7 +241,7 @@ def save_taskset_as_Ada (experiment_id):
 
         data_for_plotting = '\t--  Needed to plot diagrams. These data are stored as strings in order to avoid issue related\n'
         data_for_plotting += '\t--  to differents types representations in differents languages (Python and Ada).\n'
-        taskset_size = str(taskset.find('size').text)
+        taskset_size = str(taskset.find('tasksetsize').text)
         taskset_utilization = str(taskset.find('tasksetutilization').text)
         criticality_factor = str(taskset.find('criticalityfactor').text)
         hi_crit_proportion = str(taskset.find('perc').text)
@@ -296,7 +296,7 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
   executionid_XML = ET.SubElement(taskset_selector_XML, 'executionid')
   executionid_XML.text = ('E' + str(experiment_id) + '_' + approach + '_T' + str(taskset_id)).lower()
 
-  size_XML = ET.SubElement(taskset_selector_XML, 'size')
+  size_XML = ET.SubElement(taskset_selector_XML, 'tasksetsize')
   size_XML.text = str(len(c1_steady) + len(c2_steady))
 
   util_XML = ET.SubElement(taskset_selector_XML, 'tasksetutilization')

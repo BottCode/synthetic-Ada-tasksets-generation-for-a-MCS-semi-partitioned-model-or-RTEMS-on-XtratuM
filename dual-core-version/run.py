@@ -7,6 +7,7 @@ import config
 import copy
 import sys
 import utils
+import compare_schedulable_taskset
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
@@ -52,7 +53,7 @@ def select_bin_packing_algorithm (selection):
 # Run one instance of the tests (this functions is necessary for parallelism)
 def run_instance (n, p, f, U, experiment_id):
   # # # print("taskset: ", n, p, f, U)
-  taskset, taskset_id = generate_taskset(n, p, f, U)
+  taskset, taskset_id = generate_taskset(n, p, f, U, experiment_id)
   # sys.exit()
   taskset_utilization = calc_total_utilization(taskset)
 
@@ -140,11 +141,12 @@ def run_first_test ():
     res_global.append([])
 
   # Starting and final utilization values
-  U = 1.6
-  finish_U = 2.2
+  U = config.STARTING_UTIL
   # Utilization step
-  step = 0.012
+  step = config.UTIL_STEP
+  finish_U = 2.2
   first_test_bar = Bar('First test', max=51)
+  config.STEPS = 0
   while U <= finish_U:
     # For each utilization level
 
@@ -170,6 +172,7 @@ def run_first_test ():
       res_global[i].append(res_local[i])
 
     U += step
+    config.STEPS += 1
     first_test_bar.next()
 
   utils.beautify_XML_Files(experiment_id)
@@ -189,9 +192,10 @@ def check_utilization_total_schedulability (n, p, f, experiment_id):
   for _ in range(config.NUMBER_OF_APPROACHES):
     total_schedulable_utilizations.append(0)
   # Starting utilization value
-  U = 1.6
+  U = config.STARTING_UTIL
   # Utilization step
-  step = 0.012
+  step = config.UTIL_STEP
+  config.STEPS = 0
   while U <= 2.2:
     results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(n, p, f, U, experiment_id) for _ in range(config.NUMBER_OF_TESTS))
     for result in results:
@@ -200,6 +204,7 @@ def check_utilization_total_schedulability (n, p, f, experiment_id):
           total_schedulable_utilizations[i] += result[1]
       total_utilizations += result[1]
     U += step
+    config.STEPS += 1
   return total_utilizations, total_schedulable_utilizations
 
 def run_second_test ():
@@ -273,15 +278,19 @@ config.RUNTIME_DIR = '"' + sys.argv[1] + '"'
 if config.RUN_FIRST_TEST:
   # print('>>> Running first test')
   run_first_test()
+  compare_schedulable_taskset.produce_results_experiment (1)
 if config.RUN_SECOND_TEST:
   # print('>>> Running second test')
   run_second_test()
+  compare_schedulable_taskset.produce_results_experiment (2)
 if config.RUN_THIRD_TEST:
   # print('>>> Running third test')
   run_third_test()
+  compare_schedulable_taskset.produce_results_experiment (3)
 if config.RUN_FOURTH_TEST:
   # print('>>> Running fourth test')
   run_fourth_test()
+  compare_schedulable_taskset.produce_results_experiment (4)
 # print('>>> Done')
 
 config.RUNTIME_DIR = ""

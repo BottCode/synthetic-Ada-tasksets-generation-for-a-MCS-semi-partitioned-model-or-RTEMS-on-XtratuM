@@ -16,10 +16,10 @@ CHECK_SEMI_2_BF    = True
 NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
-RUN_FIRST_TEST = True
+RUN_FIRST_TEST = False
 RUN_SECOND_TEST = False
 RUN_THIRD_TEST = False
-RUN_FOURTH_TEST = False
+RUN_FOURTH_TEST = True
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
@@ -37,6 +37,10 @@ NUMBER_OF_TESTS = 1
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
+
+UTIL_STEP = 0.012
+STARTING_UTIL = 1.6
+STEPS = 0
 
 # The following list contains the order in which the cores enter HI-crit mode
 # All the possible combinations are tested (in Model 3 a single core entering

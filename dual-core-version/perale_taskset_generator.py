@@ -5,6 +5,7 @@ from perale_support_functions import UUnifast
 import perale_support_functions
 import numpy as np
 import math
+import copy
 
 # periods generated with hyperperiod choosing method (113400000 microseconds, range [10,100] ms)
 task_hyper_113400000_10_100 = [94500, 94500, 94500, 94500, 94500, 94500, 94500, 94500, 94500, 94500, 94500, 94500,
@@ -12,6 +13,7 @@ task_hyper_113400000_10_100 = [94500, 94500, 94500, 94500, 94500, 94500, 94500, 
                                60000, 60480, 63000, 64800, 65625, 67500, 70000, 70875, 72000, 75000, 75600, 78750,
                                81000, 84000, 84375, 87500, 90000, 90720, 94500, 100000]
 
+# periods generated with hyperperiod choosing method (113400000 microseconds, range [10,200] ms)
 # periods generated with hyperperiod choosing method (113400000 microseconds, range [10,200] ms)
 task_hyper_113400000_10_200 = [10000, 15750, 18900, 20000, 22500, 25200, 26250, 28350, 30240, 33750, 35000, 37800,
                                39375, 40000, 42000, 45000, 45360, 47250, 50000, 50400, 52500, 54000, 56250, 56700,
@@ -74,7 +76,7 @@ def create_taskset_hyper_113400000_10_100(num_tasks, utilization, min_armonicity
         periods = []
         i = 0
         while i < num_tasks:
-            rand = task_hyper_113400000_10_100[randint(0, 43)]
+            rand = task_hyper_113400000_10_100[randint(0, len(task_hyper_113400000_10_100)-1)]
             if rand not in periods:
                 periods.append(rand)
                 i = i + 1
@@ -105,6 +107,7 @@ def create_taskset_hyper_113400000_10_200_with_some_long (num_tasks, utilization
     n_task_armonic = -1
     while n_task_armonic < min_armonicity_grade or n_task_armonic > max_armonicity_grade:
         taskset = []
+        # periods_to_choose = copy.deepcopy(task_hyper_113400000_10_200)
         periods = []
         i = 0
         num_longs = randint(1,2)

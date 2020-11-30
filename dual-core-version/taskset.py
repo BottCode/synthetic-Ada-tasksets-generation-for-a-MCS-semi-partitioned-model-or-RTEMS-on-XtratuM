@@ -50,15 +50,19 @@ def sort_tasks_criticality (t1, t2):
 # p -> Percentage of HI-crit tasks
 # f -> Criticality factor
 # maxU -> Total taskset utilization
-def generate_taskset (n, p, f, maxU):
+def generate_taskset (n, p, f, maxU, experiment_id):
   # print (n)
   U = []
   T = []
+  if experiment_id == 4:
+    max_armonicity = 35
+  else:
+    max_armonicity = 2
 
   config.GLOBAL_TASKSET_ID += 1
   HI_tot = n * p
   LO_tot = n - HI_tot
-  t_perale = perale_taskset_generator.create_taskset_hyper_113400000_10_100(n, maxU, 1, 2)
+  t_perale = perale_taskset_generator.create_taskset_hyper_113400000_10_200_with_some_long(n, maxU, 1, 35)
 
   for t in t_perale[0]:
     T.append(t[2]/1000)
