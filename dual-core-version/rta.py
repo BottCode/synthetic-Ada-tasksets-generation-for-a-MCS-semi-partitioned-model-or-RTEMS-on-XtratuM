@@ -28,7 +28,7 @@ def worst_fit_bin_packing (task, cores):
   result = None
   for c in cores:
     core = cores[c]
-    if not core['considered'] and core['utilization'] < min_utilization and core['utilization'] <= 1:
+    if not core['considered'] and core['utilization'] <= min_utilization and core['utilization'] <= 1:
       result = c
       min_utilization = core['utilization']
   return result
@@ -37,12 +37,12 @@ def worst_fit_bin_packing (task, cores):
 # Implements the best fit bin-packing algorithm
 # To use it set config.BEST_FIT_BP to True
 def best_fit_bin_packing (task, cores):
-  max_utilization = -1
+  max_utilization = 0
   result = None
   for c in cores:
     core = cores[c]
     # if not core['considered'] and core['utilization'] + task['U'] >= max_utilization and core['utilization'] + task['U'] <= 1:
-    if not core['considered'] and core['utilization'] > max_utilization and core['utilization'] <= 1:
+    if not core['considered'] and core['utilization'] >= max_utilization and core['utilization'] <= 1:
       result = c
       max_utilization = core['utilization']
   return result
