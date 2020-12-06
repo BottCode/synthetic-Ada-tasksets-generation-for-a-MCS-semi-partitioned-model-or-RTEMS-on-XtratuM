@@ -13,6 +13,7 @@ pragma Warnings (On);
 
 with Single_Execution_Data;
 with Production_Workload;
+with Workload_Manager;
 with Initial_Delay;
 
 package body Periodic_Tasks is
@@ -41,12 +42,12 @@ package body Periodic_Tasks is
                                     System.BB.Time.Microseconds (Low_Critical_Budget), Period, Reduced_Deadline, Is_Migrable);
       loop
          delay until Next_Period;
-         if I rem 18 = 0 and False then
-            Production_Workload.Small_Whetstone (Workload);
-         end if;
 
+         --  Ada.Text_IO.Put_Line ("CPU: " & CPU'Image(System.OS_Interface.Current_CPU) & Integer'Image(ID) & Integer'Image (I));
+         Production_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));
+         
          I := I + 1;
-         Production_Workload.Small_Whetstone (Workload);
+
          Next_Period := Next_Period + Period_To_Add;
       end loop;
    end Low_Crit;
@@ -62,14 +63,15 @@ package body Periodic_Tasks is
    begin
       STPO.Initialize_HI_Crit_Task
          (STPO.Self, Id, Hosting_Migrating_Tasks_Priority, System.BB.Time.Microseconds (Low_Critical_Budget), System.BB.Time.Microseconds (High_Critical_Budget), Period);
-      
+
       loop
          delay until Next_Period;
          
-         if I rem 18 = 0 and False then
-            Production_Workload.Small_Whetstone (Workload);
-         end if;
+         --  Ada.Text_IO.Put_Line ("CPU: " & CPU'Image(System.OS_Interface.Current_CPU) & Integer'Image(ID) & Integer'Image (I));
+         Production_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));
+
          I := I + 1;
+
          Next_Period := Next_Period + Period_To_Add;
       end loop;
    end High_Crit;
@@ -79,10 +81,9 @@ package body Periodic_Tasks is
    ------------
 
    procedure Init is
-      Next_Period   : constant Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);
-      Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Get_Longest_Hyperperiod);
    begin
-      delay until Next_Period + Period_To_Add;
+      --  Stuck until someone states that experiment is over.
+      Core_Execution_Modes.Wait_Experiment_Over;
       --  Ada.Text_IO.Put_Line ("----------------------");
       --  Ada.Text_IO.Put_Line ("--  END EXPERIMENT  --");
       --  Ada.Text_IO.Put_Line ("----------------------");
@@ -97,6 +98,8 @@ package body Periodic_Tasks is
       Ada.Text_IO.Put_Line ("<tasksetutilization>" & Single_Execution_Data.Taskset_Utilization & "</tasksetutilization>");
       Ada.Text_IO.Put_Line ("<criticalityfactor>" & Single_Execution_Data.Criticality_Factor & "</criticalityfactor>");
       Ada.Text_IO.Put_Line ("<perc>" & Single_Execution_Data.HI_Crit_Proportion & "</perc>");
+      Ada.Text_IO.Put_Line ("<hyperperiodc1>" & Natural'Image (Single_Execution_Data.Experiment_Hyperperiods (CPU'First)) & "</hyperperiodc1>");
+      Ada.Text_IO.Put_Line ("<hyperperiodc2>" & Natural'Image (Single_Execution_Data.Experiment_Hyperperiods (CPU'Last)) & "</hyperperiodc2>");
 
       System.BB.Threads.Queues.Print_Tasks_Log;
       Core_Execution_Modes.Print_CPUs_Log;
@@ -115,18 +118,34 @@ package body Periodic_Tasks is
    
    --  This task stucks second core's execution when current experiment should stops.
    task End_Task_Second_Core with 
-         Priority => System.Priority'Last - 1,
+         Priority => System.Priority'Last,
          CPU      => CPU'Last;
 
    task body End_Task_Second_Core is
-      Next_Period : constant Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);
-      Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Get_Longest_Hyperperiod);
    begin
-      delay until Next_Period + Period_To_Add;
+      --  Stuck until someone states that experiment is over.
+      Core_Execution_Modes.Wait_Experiment_Over;
 
       loop
          null;
       end loop;
    end End_Task_Second_Core;
+
+   task Notify_Major_Hyperperiod_Has_Been_Expired with 
+         Priority => System.Priority'Last - 1,
+         CPU      => CPU'Last;
+   
+   task body Notify_Major_Hyperperiod_Has_Been_Expired is
+      Next_Period : constant Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);
+      Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Get_Longest_Hyperperiod);
+   begin
+      delay until Next_Period + Period_To_Add;
+
+      Core_Execution_Modes.Set_Parameters_Referee
+                                       (Safe_Boundary_Exceeded => False,
+                                       Experiment_Not_Valid => False,
+                                       Finish_Experiment => True);
+
+   end Notify_Major_Hyperperiod_Has_Been_Expired;
 
 end Periodic_Tasks;

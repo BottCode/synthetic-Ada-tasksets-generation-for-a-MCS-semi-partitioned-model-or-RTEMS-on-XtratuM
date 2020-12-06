@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
 from shutil import copyfile, rmtree
+import random
 
 from math import gcd
 
@@ -60,6 +61,8 @@ def microseconds_to_kilowhetstone_for_ravenscar_runtime (microseconds):
     divider = 100000
   
   result = int( (microseconds/divider) * multiplier)
+  if result == 0:
+    result = 1
   return result
   
 
@@ -80,7 +83,7 @@ def clean_XML_and_Ada_Files(experiment_id):
       dirpath = os.path.join(config.Ada_Paths[experiment_id][path], dirname)
       if os.path.exists(dirpath) and dirname != '.gitkeep':
         rmtree(dirpath)  
-  
+    
 
 def save_taskset_as_Ada (experiment_id):
   q = 0
@@ -156,6 +159,8 @@ def save_taskset_as_Ada (experiment_id):
         Ada_Unit += withed_unit + package_name
 
         cores_XML = [taskset.find('core1'), taskset.find('core2')]
+
+        task_printed = 0
         for core_XML in cores_XML:
           tasks_XML = core_XML.find('tasks')
           
@@ -195,6 +200,13 @@ def save_taskset_as_Ada (experiment_id):
             current_task += 'Workload => ' + str(workload) + ', ' # + task_XML.find('workload').text + ', '
             current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ', '
             current_task += 'Reduced_Deadline => ' + str(to_microseconds_for_Ada (task_XML.find('reduceddead').text)) + ', '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              if (core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE'):
+                current_task += 'Could_Exceed => True, '
+              else:
+                current_task += 'Could_Exceed => False, '
+
             current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
 
             if task_XML.find('migrating').text == "True":
@@ -209,7 +221,6 @@ def save_taskset_as_Ada (experiment_id):
             Ada_Unit += current_task + '\n'
 
             string_tasks.append(current_task)
-            
             # print(current_task)
 
         Ada_Unit += '\nend taskset_' + taskset_name + ';\n'
@@ -255,7 +266,7 @@ def save_taskset_as_Ada (experiment_id):
         f.write(single_execution_data_unit)
         f.close()
 
-        # flashing script and board init file
+        # flash script and board init file
         
         template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
         cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
@@ -263,15 +274,81 @@ def save_taskset_as_Ada (experiment_id):
         copyfile(cora_ps7_init_file, taskset_dir + 'cora_ps7_init.tcl')
 
         f = open(taskset_dir + 'cora_xsdb.ini', 'a')
-        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+1000))
+        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
         f.close()
 
+        # Workload_Manager body generation
+        workload_manager_unit = 'package body Workload_Manager is\n\n\ttype Workloads is array (Natural range <>) of Positive;\n\ttype Workloads_Access is access all Workloads;\n\n'
+
+        overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (0 .. ' + str(taskset.find('tasksetsize').text) + ' - 1) of Workloads_Access := (\n'
+
+        get_workload_ada_function = '\t--  Get task "ID" \'s workload for its I-th job release.\n'
+        get_workload_ada_function += '\tfunction Get_Workload(ID : Natural; I : Natural) return Positive is\n'
+        get_workload_ada_function += '\tbegin\n\t\tif I in Overall_Workloads (ID)\'Range then\n\t\t\treturn Overall_Workloads (ID)(I);\n\t\telse\n\t\t\treturn Overall_Workloads (ID)(0);\n\t\tend if;\n\tend Get_Workload;\n\n'
+
+        workloads_ada_array = {'naming': [], 'value': []}
+        
+        for core_XML in cores_XML:
+          tasks_XML = core_XML.find('tasks')
+
+          current_hyp = max(hyperperiod_core_1, hyperperiod_core_2)
+
+          for task_XML in tasks_XML.findall('task'):
+            task_index = int(task_XML.find('ID').text)
+
+            workload_manager_unit += '\tWorkloads_T' + str(task_index) + ' : aliased Workloads := ('
+
+            number_of_JR = int(current_hyp // to_microseconds_for_Ada (task_XML.find('period').text))
+            values_for_job_release = []
+
+            # Workloads computation for each job release for current task.
+            if task_XML.find('criticality').text == 'HIGH' and ((core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE')):
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+              for i in range (0, number_of_JR-1):
+                has_to_exceed = random.randint(1, 100)
+                if has_to_exceed == 1:
+                  criticality_factor = (float(taskset.find('criticalityfactor').text))
+                  values_for_job_release.append (int((workload * random.uniform(1.2, 1.3))) + 1)
+                else:
+                  values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+            else:
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+              for i in range (0, number_of_JR-1):
+                values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+
+            for i in range(0, len(values_for_job_release)):
+              if (i+1 % 300) == 0: # start a new line in order to avoid compilation issues.
+                workload_manager_unit += '\n\t\t\t\t'
+              if i < len(values_for_job_release)-1:
+                workload_manager_unit += str(values_for_job_release[i]) + ', '
+              else:
+                workload_manager_unit += str(values_for_job_release[i]) + ');\n'
+            
+            overall_workloads_ada_array += '\t\t' + str(task_index) + ' => Workloads_T' + str(task_index) + '\'Access'
+            if task_printed != (int(taskset.find('tasksetsize').text) - 1):
+              overall_workloads_ada_array += ',\n'
+            else:
+              overall_workloads_ada_array += '\n\t);\n\n'
+            task_printed += 1
+
+        # Workload_Manager file unit generation
+        workload_manager_unit += overall_workloads_ada_array + get_workload_ada_function + 'end Workload_Manager;'
+        f = open(src_dir + 'workload_manager.adb', 'w')
+        f.write(workload_manager_unit)
+        f.close()
 def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2, taskset_id):
   number_of_cores = 2
   cores_indexes = ['c1', 'c2']
+  is_c1_hosting_mig = False
+  is_c2_hosting_mig = False
 
   assert(len(c1_with_mig) + len(c2_with_mig) > 0), "We have to save only those tasksets concerning at least one migrating task."
   
+  if len(c1_with_mig) > 0:
+    is_c1_hosting_mig = True
+  if len(c2_with_mig) > 0:
+    is_c2_hosting_mig = True
+
   cores_steady = [c1_steady, c2_steady]
   cores_with_mig = [c1_with_mig, c2_with_mig]
 
@@ -308,6 +385,12 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
   # proportion of HI-crit tasks
   perc_XML = ET.SubElement(taskset_selector_XML, 'perc')
   perc_XML.text = str(hi_crit_proportion)
+
+  is_c1_hosting_mig_XML = ET.SubElement(taskset_selector_XML, 'migonc1')
+  is_c1_hosting_mig_XML.text = str(is_c1_hosting_mig).upper()
+
+  is_c2_hosting_mig_XML = ET.SubElement(taskset_selector_XML, 'migonc2')
+  is_c2_hosting_mig_XML.text = str(is_c2_hosting_mig).upper()
 
   cores[0] = ET.SubElement(taskset_selector_XML, 'core1')
   cores[1] = ET.SubElement(taskset_selector_XML, 'core2')
@@ -463,7 +546,7 @@ def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utiliza
   else:
     #assert(len(config.last_time_on_core_i_with_additional_migrating_task['c2']) <= 0), 'c2 should NOT have migrating tasks'
     if not (len(config.last_time_on_core_i_with_additional_migrating_task['c2']) <= 0):
-      print('c2 should NOT have migrating tasks')
+      # print('c2 should NOT have migrating tasks')
       # @TODO: you are cheating...
       config.last_time_on_core_i_with_additional_migrating_task['c2'] = []
 
@@ -501,7 +584,7 @@ def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utiliza
   else:
     #assert(len(config.last_time_on_core_i_with_additional_migrating_task['c1']) <= 0), 'c1 should NOT have migrating tasks'
     if not (len(config.last_time_on_core_i_with_additional_migrating_task['c1']) <= 0):
-      print('c1 should NOT have migrating tasks')
+      # print('c1 should NOT have migrating tasks')
       # @TODO: you are cheating...
       config.last_time_on_core_i_with_additional_migrating_task['c1'] = []
 

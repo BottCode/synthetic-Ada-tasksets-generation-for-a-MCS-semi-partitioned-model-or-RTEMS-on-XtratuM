@@ -39,6 +39,7 @@ package Periodic_Tasks is
       Workload                         : Positive;
       Period                           : Positive;
       Reduced_Deadline                 : Positive;
+      Could_Exceed                     : Boolean;
       CPU_Id                           : CPU) 
   is
       pragma Priority (Pri);

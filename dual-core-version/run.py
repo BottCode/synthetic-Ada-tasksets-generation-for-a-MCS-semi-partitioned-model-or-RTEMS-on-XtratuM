@@ -8,6 +8,7 @@ import copy
 import sys
 import utils
 import compare_schedulable_taskset
+import optparse
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
@@ -141,11 +142,11 @@ def run_first_test ():
     res_global.append([])
 
   # Starting and final utilization values
-  U = config.STARTING_UTIL
+  U = config.UTIL_LOWER_BOUND
   # Utilization step
   step = config.UTIL_STEP
-  finish_U = 2.2
-  first_test_bar = Bar('First test', max=51)
+  finish_U = config.UTIL_HIGHER_BOUND
+  first_test_bar = Bar('First test', max=(int((finish_U-U)//step))+1)
   config.STEPS = 0
   while U <= finish_U:
     # For each utilization level
@@ -192,11 +193,11 @@ def check_utilization_total_schedulability (n, p, f, experiment_id):
   for _ in range(config.NUMBER_OF_APPROACHES):
     total_schedulable_utilizations.append(0)
   # Starting utilization value
-  U = config.STARTING_UTIL
+  U = config.UTIL_LOWER_BOUND
   # Utilization step
   step = config.UTIL_STEP
   config.STEPS = 0
-  while U <= 2.2:
+  while U <= config.UTIL_HIGHER_BOUND:
     results = Parallel(n_jobs=config.PARALLEL_JOBS)(delayed(run_instance)(n, p, f, U, experiment_id) for _ in range(config.NUMBER_OF_TESTS))
     for result in results:
       for i in range(config.NUMBER_OF_APPROACHES):
@@ -214,10 +215,10 @@ def run_second_test ():
   for _ in range(config.NUMBER_OF_APPROACHES):
     res_global.append([])
   # Starting and final Criticality Factor values
-  f = 1.25
-  finish_f = 4
-  f_step = 0.25
-  second_test_bar = Bar('Second test', max=11)
+  f = config.CRITICALITY_LOWER_BOUND
+  finish_f = config.CRITICALITY_HIGHER_BOUND
+  f_step = config.CRITICALITY_STEP
+  second_test_bar = Bar('Second test', max=int((finish_f-f)//f_step)+1)
   while f <= finish_f:
     total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, 0.5, f, experiment_id)
     for i in range(config.NUMBER_OF_APPROACHES):
@@ -237,10 +238,10 @@ def run_third_test ():
   for _ in range(config.NUMBER_OF_APPROACHES):
     res_global.append([])
   # Starting and final Proportion of HI-crit tasks values
-  p = 0.1
-  finish_p = 0.9
-  p_step = 0.1
-  third_test_bar = Bar('Third test', max=9)
+  p = config.PROPORTION_LOWER_BOUND
+  finish_p = config.PROPORTION_HIGHER_BOUND
+  p_step = config.PROPORTION_STEP
+  third_test_bar = Bar('Third test', max=int((finish_p-p)//p_step)+1)
   while p <= finish_p:
     total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(12, p, 2, experiment_id)
     for i in range(config.NUMBER_OF_APPROACHES):
@@ -260,8 +261,8 @@ def run_fourth_test ():
   for _ in range(config.NUMBER_OF_APPROACHES):
     res_global.append([])
   # Taskset sizes
-  sizes = [8, 10, 12, 15, 20, 25, 30, 35]
-  fourth_test_bar = Bar('Fourth test', max=8)
+  sizes = config.TASKSETS_SIZE
+  fourth_test_bar = Bar('Fourth test', max=len(sizes))
   for size in sizes:
     total_utilizations, total_schedulable_utilizations = check_utilization_total_schedulability(size, 0.5, 2, experiment_id)
     for i in range(config.NUMBER_OF_APPROACHES):
@@ -273,7 +274,93 @@ def run_fourth_test ():
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
 
-config.RUNTIME_DIR = '"' + sys.argv[1] + '"'
+def parse_options():
+  parser = optparse.OptionParser()
+
+  parser.add_option('--runtime-dir',
+      action="store", dest="runtimedir",
+      help="query string", default="")
+
+  parser.add_option('--util-low',
+      action="store", dest="utillow",
+      help="query string", default="1.6")
+
+  parser.add_option('--util-high',
+      action="store", dest="utilhigh",
+      help="query string", default="1.2")
+
+  parser.add_option('--util-step',
+      action="store", dest="utilstep",
+      help="query string", default="0.012")
+
+  parser.add_option('--criticality-low',
+      action="store", dest="criticalitylow",
+      help="query string", default="1.5")
+
+  parser.add_option('--criticality-high',
+      action="store", dest="criticalityhigh",
+      help="query string", default="4")
+
+  parser.add_option('--criticality-step',
+      action="store", dest="criticalitystep",
+      help="query string", default="0.25")
+
+  parser.add_option('--proportion-low',
+      action="store", dest="proportionlow",
+      help="query string", default="0.1")
+
+  parser.add_option('--proportion-high',
+      action="store", dest="proportionhigh",
+      help="query string", default="0.9")
+
+  parser.add_option('--proportion-step',
+      action="store", dest="proportionstep",
+      help="query string", default="0.1")
+
+  parser.add_option('--exp-1',
+      action="store", dest="exp1",
+      help="query string", default="False")
+
+  parser.add_option('--exp-2',
+      action="store", dest="exp2",
+      help="query string", default="False")
+
+  parser.add_option('--exp-3',
+      action="store", dest="exp3",
+      help="query string", default="False")
+
+  parser.add_option('--exp-4',
+      action="store", dest="exp4",
+      help="query string", default="False")
+  
+  parser.add_option('--numb-tests',
+      action="store", dest="numbtests",
+      help="query string", default="100")
+      
+  options, args = parser.parse_args()
+  # print(options, args)
+
+  config.RUNTIME_DIR = '"' + options.runtimedir + '"'
+  config.UTIL_STEP = float(options.utilstep)
+  config.UTIL_LOWER_BOUND = float(options.utillow)
+  config.UTIL_HIGHER_BOUND = float(options.utilhigh)
+  config.CRITICALITY_STEP = float(options.criticalitystep)
+  config.CRITICALITY_LOWER_BOUND =float (options.criticalitylow)
+  config.CRITICALITY_HIGHER_BOUND = float(options.criticalityhigh)
+  config.PROPORTION_STEP = float(options.proportionstep)
+  config.PROPORTION_LOWER_BOUND = float(options.proportionlow)
+  config.PROPORTION_HIGHER_BOUND = float(options.proportionhigh)
+  config.RUN_FIRST_TEST = True if (str(options.exp1) == 'True') else False
+  config.RUN_SECOND_TEST = True if (str(options.exp2) == 'True') else False
+  config.RUN_THIRD_TEST = True if (str(options.exp3) == 'True') else False
+  config.RUN_FOURTH_TEST = True if (str(options.exp4) == 'True') else False
+  config.NUMBER_OF_TESTS = int(options.numbtests)
+  #config.TASKSETS_SIZE = 
+
+
+######### START ###########
+
+parse_options()
 
 if config.RUN_FIRST_TEST:
   # print('>>> Running first test')

@@ -10,10 +10,10 @@ CHECK_MODEL_2 = False
 CHECK_MODEL_3 = False
 
 # Enable/disable tests to run
-RUN_FIRST_TEST =  False
+RUN_FIRST_TEST =  True
 RUN_SECOND_TEST = False
 RUN_THIRD_TEST = False
-RUN_FOURTH_TEST = True
+RUN_FOURTH_TEST = False
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = True

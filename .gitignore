@@ -3,3 +3,4 @@ result
 .pyo
 *.png
 log.txt
+./dual-core-version/Ada_tasksets/experiment_4/*

@@ -6,24 +6,25 @@ PARALLEL_JOBS = 1 # multiprocessing.cpu_count()
 
 # Enable/disable models to check
 CHECK_NO_MIGRATION = True
-CHECK_SEMI_1_BF    = True
-CHECK_SEMI_1_FF    = True
-CHECK_SEMI_1_WF    = True
+CHECK_SEMI_1_BF    = False
+CHECK_SEMI_1_FF    = False
+CHECK_SEMI_2_FF    = False
+CHECK_SEMI_2_BF    = False
+
+CHECK_SEMI_1_WF    = False
 CHECK_SEMI_2_WF    = True
-CHECK_SEMI_2_FF    = True
-CHECK_SEMI_2_BF    = True
 
 NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
 RUN_FIRST_TEST = False
-RUN_SECOND_TEST = True
-RUN_THIRD_TEST = True
-RUN_FOURTH_TEST = True
+RUN_SECOND_TEST = False
+RUN_THIRD_TEST = False
+RUN_FOURTH_TEST = False
 
 # Select bin-packing algorithm to use
 FIRST_FIT_BP = False
-BEST_FIT_BP  = True 
+BEST_FIT_BP  = False 
 WORST_FIT_BP = True
 
 # Select version of Vestal's algorithm to use
@@ -39,7 +40,19 @@ NUMBER_OF_TESTS = 100
 RESULTS_DIR = './results_dualcore_2/'
 
 UTIL_STEP = 0.012
-STARTING_UTIL = 1.6
+UTIL_LOWER_BOUND = 1.6
+UTIL_HIGHER_BOUND = 2.2
+
+CRITICALITY_STEP = 0.25
+CRITICALITY_LOWER_BOUND = 1.5
+CRITICALITY_HIGHER_BOUND = 4
+
+PROPORTION_STEP = 0.1
+PROPORTION_LOWER_BOUND = 0.1
+PROPORTION_HIGHER_BOUND = 0.9
+
+TASKSETS_SIZE = [8, 10, 12, 15, 20, 25, 30, 35]
+
 STEPS = 0
 
 # The following list contains the order in which the cores enter HI-crit mode
@@ -201,4 +214,4 @@ Ada_Paths = {
 
 GLOBAL_TASKSET_ID = 0
 
-RUNTIME_DIR = '"/home/mattia/UNI/ThesisProject/zynq7000_mcs/runtime/arm-eabi/lib/gnat/ravenscar_full_zynq7000"'
+RUNTIME_DIR = ''
