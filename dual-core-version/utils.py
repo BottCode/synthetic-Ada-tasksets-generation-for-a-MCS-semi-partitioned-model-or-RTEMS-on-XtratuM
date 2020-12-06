@@ -317,7 +317,7 @@ def save_taskset_as_Ada (experiment_id):
                 values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
 
             for i in range(0, len(values_for_job_release)):
-              if (i+1 % 300) == 0: # start a new line in order to avoid compilation issues.
+              if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
                 workload_manager_unit += '\n\t\t\t\t'
               if i < len(values_for_job_release)-1:
                 workload_manager_unit += str(values_for_job_release[i]) + ', '
@@ -336,6 +336,7 @@ def save_taskset_as_Ada (experiment_id):
         f = open(src_dir + 'workload_manager.adb', 'w')
         f.write(workload_manager_unit)
         f.close()
+
 def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approach, experiment_id, taskset_U, criticality_factor, hi_crit_proportion, util_on_c1, util_on_c2, taskset_id):
   number_of_cores = 2
   cores_indexes = ['c1', 'c2']
@@ -446,13 +447,13 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
       is_migrating_XML.text = str(task['migrating'])
 
       priority_XML = ET.SubElement(task_XML, 'priority')
-      priority_XML.text = str(task['P'][cores_indexes[i]])
+      priority_XML.text = str((task['P'][cores_indexes[i]])+1)
 
       hostingmigpriority_XML = ET.SubElement(task_XML, 'hostingmigpriority')
-      hostingmigpriority_XML.text = str(task['P']['hosting_migrating']) if 'hosting_migrating' in task['P'] else str(-1)
+      hostingmigpriority_XML.text = str((task['P']['hosting_migrating'])+1) if 'hosting_migrating' in task['P'] else str(-1)
 
       targetpriority_XML = ET.SubElement(task_XML, 'targetpriority')
-      targetpriority_XML.text = str(task['P'][cores_indexes[index_other_core]])
+      targetpriority_XML.text = str((task['P'][cores_indexes[index_other_core]])+1)
 
       # Deadline equal to period
       period_XML = ET.SubElement(task_XML, 'period')
