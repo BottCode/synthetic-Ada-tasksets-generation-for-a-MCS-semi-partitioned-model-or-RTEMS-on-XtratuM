@@ -255,7 +255,8 @@ package body Production_Workload is
       IJ := IL - (IL - 3) * IK;
       IL := (IL - IK) * (IK - IJ);
       IK := (IL - IK) * IK;
-      E1(IL - 1) := Whet_Float(IJ + IK + IL);
+      E1(IL - 1) := 
+          Whet_Float(IJ + IK + IL);
       E1(IK + 1) := Abs( Cos(Z) );
 
 

@@ -11,6 +11,8 @@ with System.OS_Interface;
 with Core_Execution_Modes;
 pragma Warnings (On);
 
+with Ada.Strings.Unbounded;
+with Experiment_Info;
 with Single_Execution_Data;
 with Production_Workload;
 with Workload_Manager;
@@ -81,7 +83,19 @@ package body Periodic_Tasks is
    ------------
 
    procedure Init is
+      use Ada.Strings.Unbounded;
+      Experiment_Parameters : Experiment_Info.Exp_Params;
    begin
+      Experiment_Parameters.Experiment_Hyperperiods :=
+        (CPU'First => Single_Execution_Data.Experiment_Hyperperiods (CPU'First),
+         CPU'Last => Single_Execution_Data.Experiment_Hyperperiods (CPU'Last));
+      
+      Experiment_Parameters.Id_Experiment := Single_Execution_Data.Id_Experiment;
+      Experiment_Parameters.Approach := To_Unbounded_String (Single_Execution_Data.Approach);
+      Experiment_Parameters.Taskset_Id := Single_Execution_Data.Taskset_Id;
+      Experiment_Parameters.Id_Execution := To_Unbounded_String (Single_Execution_Data.Id_Execution);
+      
+      Experiment_Info.Set_Parameters (Experiment_Parameters);
       --  Stuck until someone states that experiment is over.
       Core_Execution_Modes.Wait_Experiment_Over;
       --  Ada.Text_IO.Put_Line ("----------------------");
@@ -105,6 +119,7 @@ package body Periodic_Tasks is
       Core_Execution_Modes.Print_CPUs_Log;
 
       Ada.Text_IO.Put_Line ("</execution>");
+      Ada.Text_IO.Put_Line("");
       --  System.BB.Threads.Queues.Print_Queues;
 
       loop

@@ -72,7 +72,7 @@ def generate_taskset (n, p, f, maxU, experiment_id):
   taskset = []
   for i in range(n):
     new_task = {
-      'ID': i,
+      'ID': i+1,
       # Is this task HI-crit?
       'HI': False,
       # HI-crit WCET

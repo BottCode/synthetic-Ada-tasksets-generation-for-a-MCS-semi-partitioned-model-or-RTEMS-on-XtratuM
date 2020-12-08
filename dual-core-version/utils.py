@@ -280,7 +280,7 @@ def save_taskset_as_Ada (experiment_id):
         # Workload_Manager body generation
         workload_manager_unit = 'package body Workload_Manager is\n\n\ttype Workloads is array (Natural range <>) of Positive;\n\ttype Workloads_Access is access all Workloads;\n\n'
 
-        overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (0 .. ' + str(taskset.find('tasksetsize').text) + ' - 1) of Workloads_Access := (\n'
+        overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (1 .. ' + str(taskset.find('tasksetsize').text) + ') of Workloads_Access := (\n'
 
         get_workload_ada_function = '\t--  Get task "ID" \'s workload for its I-th job release.\n'
         get_workload_ada_function += '\tfunction Get_Workload(ID : Natural; I : Natural) return Positive is\n'
@@ -308,7 +308,7 @@ def save_taskset_as_Ada (experiment_id):
                 has_to_exceed = random.randint(1, 100)
                 if has_to_exceed == 1:
                   criticality_factor = (float(taskset.find('criticalityfactor').text))
-                  values_for_job_release.append (int((workload * random.uniform(1.2, 1.3))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(1.2, criticality_factor * 0.8))) + 1)
                 else:
                   values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
             else:
@@ -447,13 +447,13 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
       is_migrating_XML.text = str(task['migrating'])
 
       priority_XML = ET.SubElement(task_XML, 'priority')
-      priority_XML.text = str((task['P'][cores_indexes[i]])+1)
+      priority_XML.text = str((task['P'][cores_indexes[i]]))
 
       hostingmigpriority_XML = ET.SubElement(task_XML, 'hostingmigpriority')
-      hostingmigpriority_XML.text = str((task['P']['hosting_migrating'])+1) if 'hosting_migrating' in task['P'] else str(-1)
+      hostingmigpriority_XML.text = str((task['P']['hosting_migrating'])) if 'hosting_migrating' in task['P'] else str(-1)
 
       targetpriority_XML = ET.SubElement(task_XML, 'targetpriority')
-      targetpriority_XML.text = str((task['P'][cores_indexes[index_other_core]])+1)
+      targetpriority_XML.text = str((task['P'][cores_indexes[index_other_core]]))
 
       # Deadline equal to period
       period_XML = ET.SubElement(task_XML, 'period')
