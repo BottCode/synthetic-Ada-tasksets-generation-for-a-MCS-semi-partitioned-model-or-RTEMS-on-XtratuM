@@ -34,7 +34,7 @@ VESTAL_WITH_MONITOR = False
 ALWAYS_HI_CRIT = True
 
 # Number of tests to run for each Utilization step
-NUMBER_OF_TESTS = 100
+NUMBER_OF_TESTS = 1
 
 # Results will be saved in RESULTS_DIR
 RESULTS_DIR = './results_dualcore_2/'
@@ -211,6 +211,46 @@ Ada_Paths = {
     'semi2WF': './Ada_tasksets/experiment_4/semi2-WF/'
   },
 }
+
+Ada_RTEMS_XM_Paths = {
+  1: {
+    'semi1FF': '../../TSP/Ada_tasksets/experiment_1/semi1-FF/',
+    'semi1BF': '../../TSP/Ada_tasksets/experiment_1/semi1-BF/',
+    'semi1WF': '../../TSP/Ada_tasksets/experiment_1/semi1-WF/',
+    'semi2FF': '../../TSP/Ada_tasksets/experiment_1/semi2-FF/',
+    'semi2BF': '../../TSP/Ada_tasksets/experiment_1/semi2-BF/',
+    'semi2WF': '../../TSP/Ada_tasksets/experiment_1/semi2-WF/'
+  },
+
+  2: {
+    'semi1FF': '../../TSP/Ada_tasksets/experiment_2/semi1-FF/',
+    'semi1BF': '../../TSP/Ada_tasksets/experiment_2/semi1-BF/',
+    'semi1WF': '../../TSP/Ada_tasksets/experiment_2/semi1-WF/',
+    'semi2FF': '../../TSP/Ada_tasksets/experiment_2/semi2-FF/',
+    'semi2BF': '../../TSP/Ada_tasksets/experiment_2/semi2-BF/',
+    'semi2WF': '../../TSP/Ada_tasksets/experiment_2/semi2-WF/'
+  },
+  
+  3: {
+    'semi1FF': '../../TSP/Ada_tasksets/experiment_3/semi1-FF/',
+    'semi1BF': '../../TSP/Ada_tasksets/experiment_3/semi1-BF/',
+    'semi1WF': '../../TSP/Ada_tasksets/experiment_3/semi1-WF/',
+    'semi2FF': '../../TSP/Ada_tasksets/experiment_3/semi2-FF/',
+    'semi2BF': '../../TSP/Ada_tasksets/experiment_3/semi2-BF/',
+    'semi2WF': '../../TSP/Ada_tasksets/experiment_3/semi2-WF/'
+  },
+
+  4: {
+    'semi1FF': '../../TSP/Ada_tasksets/experiment_4/semi1-FF/',
+    'semi1BF': '../../TSP/Ada_tasksets/experiment_4/semi1-BF/',
+    'semi1WF': '../../TSP/Ada_tasksets/experiment_4/semi1-WF/',
+    'semi2FF': '../../TSP/Ada_tasksets/experiment_4/semi2-FF/',
+    'semi2BF': '../../TSP/Ada_tasksets/experiment_4/semi2-BF/',
+    'semi2WF': '../../TSP/Ada_tasksets/experiment_4/semi2-WF/'
+  },
+}
+
+Ada_RTEMS_Common_Folder = '../../TSP/Ada_tasksets/common/'
 
 GLOBAL_TASKSET_ID = 0
 
