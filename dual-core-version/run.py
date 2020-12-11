@@ -249,6 +249,10 @@ def run_third_test ():
     for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([p, total_schedulable_utilizations[i] / total_utilizations])
     p += p_step
+    if p > 0.7 and p < 0.8:
+      p = 0.8
+    elif p > 0.8 and p < 0.9:
+      p = 0.9
     third_test_bar.next()
   
   utils.beautify_XML_Files(experiment_id)
