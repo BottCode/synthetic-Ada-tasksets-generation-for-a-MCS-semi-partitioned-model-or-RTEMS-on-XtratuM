@@ -296,9 +296,9 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
         copyfile (common_folder + 'rules.mk', taskset_dir + 'rules.mk')
         copyfile (common_folder + 'xm_cf.arm.xml', taskset_dir + 'xm_cf.arm.xml')
 
-        '''f = open(taskset_dir + 'cora_xsdb.ini', 'a')
+        f = open(taskset_dir + 'cora_xsdb.ini', 'a')
         f.write('dow ' + '  resident_sw'  + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
-        f.close()'''
+        f.close()
 
           
 
