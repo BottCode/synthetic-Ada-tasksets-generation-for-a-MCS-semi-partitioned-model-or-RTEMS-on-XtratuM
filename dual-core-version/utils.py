@@ -42,10 +42,10 @@ def microseconds_to_kilowhetstone_for_ravenscar_runtime (microseconds):
   multiplier = 0
   divider = 0
   # According to some evaluations:
-  #  - 13 KW    => 100 microseconds    +/- 3.5  microseconds
-  #  - 132 KW   => 1000 microseconds   +/- 3.6  microseconds
-  #  - 1325 KW  => 10000 microseconds  +/- 3.6  microseconds
-  #  - 13258 KW => 100000 microseconds +/- 3.75 microseconds
+  #  - 26 KW    => 100 microseconds          +/- 1.75  microseconds
+  #  - 264 KW   => 1000 microseconds         +/- 1.8  microseconds
+  #  - 2650 KW  => 10000 microseconds        +/- 1.8  microseconds
+  #  - 26510 KW => 100000 microseconds (1ms) +/- 1.875 microseconds
 
   if microseconds < 1000:
     multiplier = 13

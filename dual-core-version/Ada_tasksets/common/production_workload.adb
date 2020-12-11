@@ -239,7 +239,8 @@ package body Production_Workload is
       IK := IL - (IK - IJ);
       IL := (IL - IK) * (IK + IL);
       E1(IL - 1) := Whet_Float(IJ + IK + IL);
-      E1(IK - 1) := Sin( Whet_Float(IL) );
+      E1(IK - 1) := 
+            Sin( Whet_Float(IL) );
 
 
       -- Module 8: Procedure calls
