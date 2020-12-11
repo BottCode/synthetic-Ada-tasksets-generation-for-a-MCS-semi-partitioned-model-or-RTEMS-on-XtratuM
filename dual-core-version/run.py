@@ -178,6 +178,7 @@ def run_first_test ():
 
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
 
@@ -228,6 +229,7 @@ def run_second_test ():
 
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
 
@@ -247,10 +249,15 @@ def run_third_test ():
     for i in range(config.NUMBER_OF_APPROACHES):
       res_global[i].append([p, total_schedulable_utilizations[i] / total_utilizations])
     p += p_step
+    if p > 0.7 and p < 0.8:
+      p = 0.8
+    elif p > 0.8 and p < 0.9:
+      p = 0.9
     third_test_bar.next()
   
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   third_test_bar.finish()
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
 
@@ -271,6 +278,7 @@ def run_fourth_test ():
   
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
 

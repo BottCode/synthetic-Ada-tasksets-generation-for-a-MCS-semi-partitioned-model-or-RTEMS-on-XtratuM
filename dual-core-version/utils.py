@@ -82,9 +82,227 @@ def clean_XML_and_Ada_Files(experiment_id):
     for dirname in os.listdir(config.Ada_Paths[experiment_id][path]):
       dirpath = os.path.join(config.Ada_Paths[experiment_id][path], dirname)
       if os.path.exists(dirpath) and dirname != '.gitkeep':
-        rmtree(dirpath)  
-    
+        rmtree(dirpath) 
 
+  for path in config.Ada_RTEMS_XM_Paths[experiment_id]:
+    for dirname in os.listdir(config.Ada_RTEMS_XM_Paths[experiment_id][path]):
+      dirpath = os.path.join(config.Ada_RTEMS_XM_Paths[experiment_id][path], dirname)
+      if os.path.exists(dirpath) and dirname != '.gitkeep':
+        rmtree(dirpath)
+
+def edit_partition_makefile (file_name, line):
+  """ Insert given string as a new line at the beginning of a file """
+  # define name of temporary dummy file
+  dummy_file = file_name + '.bak'
+  # open original file in read mode and dummy file in write mode
+  with open(file_name, 'r') as read_obj, open(dummy_file, 'w') as write_obj:
+    # Write given line to the dummy file
+    write_obj.write(line + '\n')
+    # Read lines from original file one by one and append them to the dummy file
+    for line in read_obj:
+      write_obj.write(line)
+
+  # remove original file
+  os.remove(file_name)
+  # Rename dummy file as the original file
+  os.rename(dummy_file, file_name)
+
+# generate two XtratuM partitions, each of them concerning an Ada application on top of RTEMS (XM -> RTEMS -> Ada app)
+def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
+  common_folder = config.Ada_RTEMS_Common_Folder
+
+  for approach in config.XML_Files[experiment_id]:
+    tree = ET.parse(config.XML_Files[experiment_id][approach])
+    root = tree.getroot()
+
+    for taskset in root.findall('taskset'):
+      periods = {'p1': [], 'p2': []} # needed for hyperperiod computations
+      hyperperiods = {'p1': 0, 'p2': 0} # needed for hyperperiod computations
+
+      taskset_id = int(taskset.find('tasksetid').text)
+      if taskset_id != -1:
+        taskset_name = taskset.find('executionid').text
+
+        Ada_Units = {'p1': '', 'p2': ''}
+        Ada_Units_Files_Name = {'p1': 'taskset_' + taskset_name + '_p1.ads', 'p2': 'taskset_' + taskset_name + '_p2.ads'}
+        Single_Execution_Data = {'p1': '', 'p2': ''}
+        Main_Units = {'p1': '', 'p2': ''}
+        Mains_Files_Name = {'p1': '', 'p2': ''}
+        Tasksets_Name = {'p1': str(taskset.find('executionid').text) + '_' + 'p1', 'p2': str(taskset.find('executionid').text) + '_' + 'p2'}
+
+        # dir containing both partitions
+        taskset_dir = config.Ada_RTEMS_XM_Paths[experiment_id][approach] + taskset_name + '/'
+        os.mkdir(taskset_dir)
+
+        # dir containing src code
+        Srcs_Dir = {'p1': taskset_dir + 'First_Partition/', 'p2': taskset_dir + 'Second_Partition/'}
+        Apps_Dir = {'p1': Srcs_Dir['p1'] + 'app/', 'p2': Srcs_Dir['p2'] + 'app/'}
+        
+        os.mkdir(Srcs_Dir['p1'])
+        os.mkdir(Srcs_Dir['p2'])
+        os.mkdir(Apps_Dir['p1'])
+        os.mkdir(Apps_Dir['p2'])
+
+        # Mains generation, one for each partition 
+        for p in Main_Units:
+          Main_Units[p] = 'main_' + Tasksets_Name[p]
+          Mains_Files_Name[p] = Main_Units[p] + '.adb'
+          main = 'with System;\nwith Periodic_Tasks;\n\nwith taskset_' + Tasksets_Name[p] + ';\n'
+          main += 'pragma Unreferenced (taskset_'  + Tasksets_Name[p] + ');\n\n'
+          main += 'procedure ' + Main_Units[p] + ' is\n'
+          main += "\tpragma Priority (System.Priority'Last);\n"
+          main += 'begin\n\tPeriodic_Tasks.Init;\nend ' + Main_Units[p] + ';'
+          # create main unit Ada file
+          f = open(Apps_Dir[p] + Mains_Files_Name[p], 'w')
+          f.write(main)
+          f.close()
+
+          Ada_Units[p] = 'with Periodic_Tasks;\nuse Periodic_Tasks;\n\npackage taskset_' + Tasksets_Name[p] + ' is\n\n'
+          current_partition_XML = taskset.find ('core1') if p == 'p1' else taskset.find ('core2')
+
+          tasks_XML = current_partition_XML.find ('tasks')
+
+          # Generate taskset for current partition
+          for task_XML in tasks_XML.findall('task'):
+            current_task = '  T_'
+            current_task += task_XML.find('ID').text + ' : '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              current_task += 'High_Crit ('
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CHI').text)))
+            else:
+              current_task += 'Low_Crit ('
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+            
+            current_task += 'Id => ' + task_XML.find('ID').text + ', '
+            current_task += 'Pri => ' + str(int(task_XML.find('priority').text)) + ', ' 
+            current_task += 'Low_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CLO').text)) + ', '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              current_task += 'High_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CHI').text)) + ', '
+            
+            current_task += 'Workload => ' + str(workload) + ', ' # + task_XML.find('workload').text + ', '
+            current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ');'
+
+            periods[p].append (int(to_microseconds_for_Ada (task_XML.find('period').text)))
+
+            Ada_Units[p] += current_task + '\n'
+
+          Ada_Units[p] += '\nend taskset_' + Tasksets_Name[p] + ';'
+          f = open(Apps_Dir[p] + Ada_Units_Files_Name[p], 'w')
+          f.write(Ada_Units[p])
+          f.close()
+   
+          copyfile (common_folder + 'initial_delay.ads', Apps_Dir[p] + 'initial_delay.ads')
+          copyfile (common_folder + 'production_workload.ads', Apps_Dir[p] + 'production_workload.ads')
+          copyfile (common_folder + 'production_workload.adb', Apps_Dir[p] + 'production_workload.adb')
+          copyfile (common_folder + 'production_workload.ads', Apps_Dir[p] + 'production_workload.ads')
+          copyfile (common_folder + 'periodic_tasks.ads', Apps_Dir[p] + 'periodic_tasks.ads')
+          copyfile (common_folder + 'periodic_tasks.adb', Apps_Dir[p] + 'periodic_tasks.adb')
+          copyfile (common_folder + 'workload_manager.ads', Apps_Dir[p] + 'workload_manager.ads')
+          copyfile (common_folder + 'config.h', Apps_Dir[p] + 'config.h')
+          copyfile (common_folder + 'Makefile_partition_' + p, Apps_Dir[p] + 'Makefile')
+          copyfile (common_folder + 'Makefile_partition.am', Apps_Dir[p] + 'Makefile.am')
+          copyfile (common_folder + 'Makefile_partition.in', Apps_Dir[p] + 'Makefile.in')
+          
+          copyfile (common_folder + 'rtems_init.c', Srcs_Dir[p] + 'rtems_init.c')
+
+          edit_partition_makefile (Apps_Dir[p] + 'Makefile', 'PROGRAM=' + Main_Units[p])
+          
+
+        # Single_Execution_Data unit generation.
+        # This unit contains specifics data for the current tasksets.
+        # E.g. Tasksets hyperperiod
+        
+        hyperperiods['p1'] = int(compute_hyperperiod(periods['p1']))
+        hyperperiods['p2'] = int(compute_hyperperiod(periods['p2']))
+
+        for p in Single_Execution_Data:
+          Single_Execution_Data[p] = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
+          Single_Execution_Data[p] += 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n\tNumb_Of_Partitions : Positive := 2;\n\n'
+          Single_Execution_Data[p] += '\tExperiment_Hyperperiods : array (1 .. Numb_Of_Partitions) of Natural := (1 => ' + str(hyperperiods['p1']) + ', 2 => ' + str(hyperperiods['p1']) + ');\n\n'
+
+          Single_Execution_Data[p] += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\tPartition_Id : String := "' + p.upper() + '";\n\n'
+          Single_Execution_Data[p] += '\tId_Execution : String := "' + taskset_name + '";\n\n'
+
+          Single_Execution_Data[p] += '\t--  Needed to plot diagrams. These data are stored as strings in order to avoid issue related\n'
+          Single_Execution_Data[p] += '\t--  to differents types representations in differents languages (Python and Ada).\n'
+          taskset_size = str(taskset.find('tasksetsize').text)
+          taskset_utilization = str(taskset.find('tasksetutilization').text)
+          criticality_factor = str(taskset.find('criticalityfactor').text)
+          hi_crit_proportion = str(taskset.find('perc').text)
+          
+          Single_Execution_Data[p] += '\tTaskset_Size : String := "' + taskset_size + '";\n\tTaskset_Utilization : String := "' + taskset_utilization + '";\n\tCriticality_Factor : String := "' + criticality_factor + '";\n\tHI_Crit_Proportion : String := "' + hi_crit_proportion + '";\n\n'
+          Single_Execution_Data[p] += 'end Single_Execution_Data;'
+
+          f = open(Apps_Dir[p] + 'single_execution_data.ads', 'w')
+          f.write(Single_Execution_Data[p])
+          f.close()
+
+          # Generate Workload_Manager's body for current partition
+          current_partition_XML = taskset.find ('core1') if p == 'p1' else taskset.find ('core2')
+          tasks_XML = current_partition_XML.find ('tasks')
+
+          # Workload_Manager body generation
+          workload_manager_unit = 'package body Workload_Manager is\n\n\ttype Workloads is array (Natural range <>) of Positive;\n\ttype Workloads_Access is access all Workloads;\n\n'
+
+          overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (1 .. ' + str(taskset.find('tasksetsize').text) + ') of Workloads_Access := (\n'
+
+          get_workload_ada_function = '\t--  Get task "ID" \'s workload for its I-th job release.\n'
+          get_workload_ada_function += '\tfunction Get_Workload(ID : Natural; I : Natural) return Positive is\n'
+          get_workload_ada_function += '\tbegin\n\t\tif I in Overall_Workloads (ID)\'Range then\n\t\t\treturn Overall_Workloads (ID)(I);\n\t\telse\n\t\t\treturn Overall_Workloads (ID)(0);\n\t\tend if;\n\tend Get_Workload;\n\n'
+
+          workloads_ada_array = {'naming': [], 'value': []}
+          
+          task_printed = 0
+
+          workload_manager_unit += '\tWorkloads_Padding : aliased Workloads := (1, 1);\n' 
+          for task_XML in tasks_XML.findall('task'):
+            task_index = int(task_XML.find('ID').text)
+
+            workload_manager_unit += '\tWorkloads_T' + str(task_index) + ' : aliased Workloads := ('
+
+            number_of_JR = int(hyperperiods[p] // to_microseconds_for_Ada (task_XML.find('period').text))
+            values_for_job_release = []
+
+            # Workloads computation for each job release for current task.
+            workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+            for i in range (0, number_of_JR-1):
+              values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+
+            for i in range(0, len(values_for_job_release)):
+              if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
+                workload_manager_unit += '\n\t\t\t\t'
+              if i < len(values_for_job_release)-1:
+                workload_manager_unit += str(values_for_job_release[i]) + ', '
+              else:
+                workload_manager_unit += str(values_for_job_release[i]) + ');\n'
+            
+            overall_workloads_ada_array += '\t\t' + str(task_index) + ' => Workloads_T' + str(task_index) + '\'Access'
+            if task_printed != (int(tasks_XML.find('total').text) - 1):
+              overall_workloads_ada_array += ',\n'
+            else:
+              overall_workloads_ada_array += ',\n\t\tothers => Workloads_Padding\'Access\n\t);\n\n'
+            task_printed += 1
+          # Workload_Manager file unit generation
+          workload_manager_unit += overall_workloads_ada_array + get_workload_ada_function + 'end Workload_Manager;'
+          f = open(Apps_Dir[p] + 'workload_manager.adb', 'w')
+          f.write(workload_manager_unit)
+          f.close()
+
+        copyfile (common_folder + 'cora_ps7_init.tcl', taskset_dir + 'cora_ps7_init.tcl')
+        copyfile (common_folder + 'cora_xsdb.ini', taskset_dir + 'cora_xsdb.ini')
+        copyfile (common_folder + 'makefile', taskset_dir + 'makefile')
+        copyfile (common_folder + 'rules.mk', taskset_dir + 'rules.mk')
+        copyfile (common_folder + 'xm_cf.arm.xml', taskset_dir + 'xm_cf.arm.xml')
+
+        f = open(taskset_dir + 'cora_xsdb.ini', 'a')
+        f.write('dow ' + '  resident_sw'  + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
+        f.close()
+
+          
+
+# generate a GPR project compiling with Ravenscar supporting MCS runtime
 def save_taskset_as_Ada (experiment_id):
   q = 0
   string_tasks = []
