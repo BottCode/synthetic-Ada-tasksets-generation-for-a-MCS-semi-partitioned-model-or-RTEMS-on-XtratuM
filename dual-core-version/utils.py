@@ -297,7 +297,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
         copyfile (common_folder + 'xm_cf.arm.xml', taskset_dir + 'xm_cf.arm.xml')
 
         f = open(taskset_dir + 'cora_xsdb.ini', 'a')
-        f.write('dow ' + '  resident_sw'  + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
+        f.write('dow ' + '  resident_sw'  + '\ncon\nafter ' + str( int(max(hyperperiods['p1'], hyperperiods['p2'])/1000)+5000))
         f.close()
 
           
@@ -522,6 +522,7 @@ def save_taskset_as_Ada (experiment_id):
             # Workloads computation for each job release for current task.
             if task_XML.find('criticality').text == 'HIGH' and ((core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE')):
               workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+
               for i in range (0, number_of_JR-1):
                 has_to_exceed = random.randint(1, 100)
                 if has_to_exceed == 1:
@@ -531,8 +532,14 @@ def save_taskset_as_Ada (experiment_id):
                   values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
             else:
               workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
-              for i in range (0, number_of_JR-1):
-                values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+
+              if task_XML.find('migrating').text == 'False':
+                for i in range (0, number_of_JR-1):
+                  values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+              else:
+                for i in range (0, number_of_JR-1):
+                  values_for_job_release.append (int((workload * random.uniform(0.1, 0.3))) + 1)
+              
 
             for i in range(0, len(values_for_job_release)):
               if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
