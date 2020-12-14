@@ -101,6 +101,8 @@ package body Periodic_Tasks is
       --  Ada.Text_IO.Put_Line ("----------------------");
       --  Ada.Text_IO.Put_Line ("--  END EXPERIMENT  --");
       --  Ada.Text_IO.Put_Line ("----------------------");
+      Ada.Text_IO.Put_Line("");
+      Ada.Text_IO.Put_Line("");
 
       Ada.Text_IO.Put_Line ("<execution>");
 
@@ -119,6 +121,8 @@ package body Periodic_Tasks is
       Core_Execution_Modes.Print_CPUs_Log;
 
       Ada.Text_IO.Put_Line ("</execution>");
+
+      Ada.Text_IO.Put_Line("");
       Ada.Text_IO.Put_Line("");
       --  System.BB.Threads.Queues.Print_Queues;
 
