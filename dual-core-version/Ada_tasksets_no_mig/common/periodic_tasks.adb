@@ -105,7 +105,7 @@ package body Periodic_Tasks is
       Ada.Text_IO.Put_Line("");
 
       Ada.Text_IO.Put_Line ("<execution>");
-      Ada.Text_IO.Put_Line ("<supportingmigrations>TRUE</supportingmigrations>"); 
+      Ada.Text_IO.Put_Line ("<supportingmigrations>FALSE</supportingmigrations>"); 
 
       Ada.Text_IO.Put_Line ("<executionid>" & Single_Execution_Data.Id_Execution & "</executionid>");
       Ada.Text_IO.Put_Line ("<experimentid>" & Integer'Image (Single_Execution_Data.Id_Experiment) & "</experimentid>");

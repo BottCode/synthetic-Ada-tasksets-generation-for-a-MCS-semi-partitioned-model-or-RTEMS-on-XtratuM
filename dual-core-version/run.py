@@ -69,6 +69,7 @@ def run_instance (n, p, f, U, experiment_id):
     select_bin_packing_algorithm("WORST_FIT_BP")
     if verify_no_migration(copy.deepcopy(taskset), True):
       # print("Schedulable without migration")
+      utils.check_size_taskset_with_mig(n, 'nomigration', experiment_id, U, f, p, taskset_id)
       # print_XML()
       taskset_schedulability[0] = True
 
@@ -178,6 +179,7 @@ def run_first_test ():
 
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
@@ -229,6 +231,7 @@ def run_second_test ():
 
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
@@ -257,6 +260,7 @@ def run_third_test ():
   
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   third_test_bar.finish()
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
@@ -278,6 +282,7 @@ def run_fourth_test ():
   
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
+  utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
@@ -287,6 +292,10 @@ def parse_options():
 
   parser.add_option('--runtime-dir',
       action="store", dest="runtimedir",
+      help="query string", default="")
+
+  parser.add_option('--runtime-nomig-dir',
+      action="store", dest="runtimenomigdir",
       help="query string", default="")
 
   parser.add_option('--util-low',
@@ -349,6 +358,7 @@ def parse_options():
   # print(options, args)
 
   config.RUNTIME_DIR = '"' + options.runtimedir + '"'
+  config.RUNTIME_NO_MIG_DIR = '"' + options.runtimenomigdir + '"'
   config.UTIL_STEP = float(options.utilstep)
   config.UTIL_LOWER_BOUND = float(options.utillow)
   config.UTIL_HIGHER_BOUND = float(options.utilhigh)

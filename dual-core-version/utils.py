@@ -78,11 +78,16 @@ def clean_XML_and_Ada_Files(experiment_id):
     copyfile(xml_template, config.XML_Files[experiment_id][path])
 
   for path in config.Ada_Paths[experiment_id]:
-
     for dirname in os.listdir(config.Ada_Paths[experiment_id][path]):
       dirpath = os.path.join(config.Ada_Paths[experiment_id][path], dirname)
       if os.path.exists(dirpath) and dirname != '.gitkeep':
         rmtree(dirpath) 
+
+  for path in config.Ada_No_Mig_Paths[experiment_id]:
+    for dirname in os.listdir(config.Ada_No_Mig_Paths[experiment_id][path]):
+      dirpath = os.path.join(config.Ada_No_Mig_Paths[experiment_id][path], dirname)
+      if os.path.exists(dirpath) and dirname != '.gitkeep':
+        rmtree(dirpath)
 
   for path in config.Ada_RTEMS_XM_Paths[experiment_id]:
     for dirname in os.listdir(config.Ada_RTEMS_XM_Paths[experiment_id][path]):
@@ -297,7 +302,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
         copyfile (common_folder + 'xm_cf.arm.xml', taskset_dir + 'xm_cf.arm.xml')
 
         f = open(taskset_dir + 'cora_xsdb.ini', 'a')
-        f.write('dow ' + '  resident_sw'  + '\ncon\nafter ' + str( int(max(hyperperiods['p1'], hyperperiods['p2'])/1000)+5000))
+        f.write('\n\nafter ' + str( int(max(hyperperiods['p1'], hyperperiods['p2'])/1000)+5000))
         f.close()
 
           
@@ -529,16 +534,276 @@ def save_taskset_as_Ada (experiment_id):
                   criticality_factor = (float(taskset.find('criticalityfactor').text))
                   values_for_job_release.append (int((workload * random.uniform(1.2, criticality_factor * 0.8))) + 1)
                 else:
-                  values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
             else:
               workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
 
               if task_XML.find('migrating').text == 'False':
                 for i in range (0, number_of_JR-1):
-                  values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
               else:
                 for i in range (0, number_of_JR-1):
-                  values_for_job_release.append (int((workload * random.uniform(0.1, 0.3))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(0.5, 0.51))) + 1)
+              
+
+            for i in range(0, len(values_for_job_release)):
+              if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
+                workload_manager_unit += '\n\t\t\t\t'
+              if i < len(values_for_job_release)-1:
+                workload_manager_unit += str(values_for_job_release[i]) + ', '
+              else:
+                workload_manager_unit += str(values_for_job_release[i]) + ');\n'
+            
+            overall_workloads_ada_array += '\t\t' + str(task_index) + ' => Workloads_T' + str(task_index) + '\'Access'
+            if task_printed != (int(taskset.find('tasksetsize').text) - 1):
+              overall_workloads_ada_array += ',\n'
+            else:
+              overall_workloads_ada_array += '\n\t);\n\n'
+            task_printed += 1
+
+        # Workload_Manager file unit generation
+        workload_manager_unit += overall_workloads_ada_array + get_workload_ada_function + 'end Workload_Manager;'
+        f = open(src_dir + 'workload_manager.adb', 'w')
+        f.write(workload_manager_unit)
+        f.close()
+
+# generate a GPR project compiling with Ravenscar with no supporting for migrations
+def save_taskset_as_Ada_NO_MIG (experiment_id):
+  q = 0
+  string_tasks = []
+
+  for approach in config.XML_Files[experiment_id]:
+    tree = ET.parse(config.XML_Files[experiment_id][approach])
+    root = tree.getroot()
+
+    for taskset in root.findall('taskset'):
+      periods_c1 = [] # needed for hyperperiod computations
+      periods_c2 = []
+
+      taskset_id = int(taskset.find('tasksetid').text)
+      if taskset_id != -1:
+        Ada_Unit = ''
+        Main_Unit = ''
+
+        taskset_name = taskset.find('executionid').text
+
+        # Main generation
+        main_name = 'main_' + taskset_name
+        main_file_name = main_name + '.adb'
+        main_withed_units = 'with System;\nwith Periodic_Tasks;\n\nwith taskset_' + taskset_name + ';\n' 
+        main_unreferenced_units = 'pragma Unreferenced (taskset_'  + taskset_name + ');\n\n'
+        main_procedure = 'procedure ' + main_name + ' is\n'
+        main_decl_section = "    pragma Priority (System.Priority'Last);\n    pragma CPU (1);\n"
+        main_body = 'begin\n    Periodic_Tasks.Init;\nend ' + main_name + ';'
+        
+        Main_Unit += main_withed_units + main_unreferenced_units +  main_procedure + main_decl_section + main_body
+
+        taskset_dir = config.Ada_No_Mig_Paths[experiment_id][approach] + taskset_name + '/'
+        os.mkdir(taskset_dir)
+
+        # dir containing src code
+        src_dir = taskset_dir + 'src/'
+        os.mkdir(src_dir)
+        # dir containing compiled code
+        object_code_dir = taskset_dir + 'obj/'
+        os.mkdir(object_code_dir)
+
+        # .gpr file project generation
+        project_file_name = taskset_name + '.gpr'
+        project = 'project ' + taskset_name + ' is\n\n'
+        project += '\tfor Languages use ("ada");\n\tfor Main use ("' + main_file_name + '");\n\tfor Source_Dirs use ("src", "../../../common");\n\tfor Object_Dir use "obj";\n    for Runtime ("ada") use '
+        runtime_dir = config.RUNTIME_NO_MIG_DIR + ';\n'
+        project += runtime_dir + '\tfor Target use "arm-eabi";\n\n'
+        project += '\tpackage Compiler is\n        for Switches ("ada") use ("-g", "-gnatwa", "-gnatQ");\n    end Compiler;\n\n'
+        project += '\tpackage Builder is\n        for Switches ("ada") use ("-g", "-O0");\n    end Builder;\n\n'
+        project += 'end ' + taskset_name + ';'
+
+        f = open(taskset_dir + project_file_name, 'w')
+        f.write(project)
+        f.close()
+
+        # Makefile generation
+
+        make_all = 'all:  test\n\n'
+        make_test = 'test:\n\tgprbuild ' + project_file_name + '\n\n'
+        make_clean = 'clean:\n\tgprclean ' + project_file_name + '\n\n'
+        makefile = make_all + make_test + make_clean
+
+        f = open(taskset_dir + 'makefile', 'w')
+        f.write(makefile)
+        f.close()
+
+        # Ada taskset unit generation
+
+        withed_unit = 'with Periodic_Tasks;\nuse Periodic_Tasks;\n'
+        package_name = '\npackage taskset_' + taskset_name + ' is\n\n'
+        file_name = 'taskset_' + taskset_name + '.ads'
+
+        Ada_Unit += withed_unit + package_name
+
+        cores_XML = [taskset.find('core1'), taskset.find('core2')]
+
+        task_printed = 0
+        for core_XML in cores_XML:
+          tasks_XML = core_XML.find('tasks')
+          
+          for task_XML in tasks_XML.findall('task'):
+            current_task = '  T_'
+            current_task += task_XML.find('ID').text + ' : '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              current_task += 'High_Crit ('
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CHI').text)))
+            else:
+              current_task += 'Low_Crit ('
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+            
+            current_task += 'Id => ' + task_XML.find('ID').text + ', '
+
+            if core_XML == taskset.find('core2'):
+              current_task += 'Pri => ' + str(int(task_XML.find('priority').text)+q) + ', '
+              current_task += 'Hosting_Migrating_Tasks_Priority => ' + str(int(task_XML.find('hostingmigpriority').text)+q) + ', '
+            else:
+              current_task += 'Pri => ' + task_XML.find('priority').text + ', '
+              current_task += 'Hosting_Migrating_Tasks_Priority => ' + task_XML.find('hostingmigpriority').text + ', '
+
+            if task_XML.find('criticality').text == 'LOW':
+              if core_XML == taskset.find('core1'):
+                current_task += 'On_Target_Core_Priority => ' + str(int(task_XML.find('targetpriority').text)+q) + ', '
+              else:
+                current_task += 'On_Target_Core_Priority => ' + task_XML.find('targetpriority').text + ', '
+            
+            current_task += 'Low_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CLO').text)) + ', '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              current_task += 'High_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CHI').text)) + ', '
+            else:
+              current_task += 'Is_Migrable => ' + task_XML.find('migrating').text + ', '
+            
+            current_task += 'Workload => ' + str(workload) + ', ' # + task_XML.find('workload').text + ', '
+            current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ', '
+            current_task += 'Reduced_Deadline => ' + str(to_microseconds_for_Ada (task_XML.find('reduceddead').text)) + ', '
+
+            if task_XML.find('criticality').text == 'HIGH':
+              if (core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE'):
+                current_task += 'Could_Exceed => True, '
+              else:
+                current_task += 'Could_Exceed => False, '
+
+            current_task += 'CPU_Id => ' + ('1' if core_XML.tag == 'core1' else '2') + ');'
+
+            if task_XML.find('migrating').text == "True":
+              periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
+              periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
+            else:
+              if core_XML == taskset.find('core1'):
+                periods_c1.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
+              else:
+                periods_c2.append(int(to_microseconds_for_Ada (task_XML.find('period').text)))
+
+            Ada_Unit += current_task + '\n'
+
+            string_tasks.append(current_task)
+            # print(current_task)
+
+        Ada_Unit += '\nend taskset_' + taskset_name + ';\n'
+        # create taskset unit Ada file
+        f = open(src_dir + file_name, 'w')
+        f.write(Ada_Unit)
+        f.close()
+        # create main unit Ada file
+        f = open(src_dir + main_file_name, 'w')
+        f.write(Main_Unit)
+        f.close()
+
+        # Single_Execution_Data unit generation.
+        # This unit contains specifics data for the current tasksets.
+        # E.g. Tasksets hyperperiod
+        
+        hyperperiod_core_1 = int(compute_hyperperiod(periods_c1))
+        hyperperiod_core_2 = int(compute_hyperperiod(periods_c2))
+
+        single_execution_data_unit = ''
+        single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
+        single_execution_data_unit += single_execution_data_withed_package + 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
+        single_execution_data_spec = '\tExperiment_Hyperperiods : array (CPU) of Natural := (CPU\'First => ' + str(hyperperiod_core_1) + ', CPU\'Last => ' + str(hyperperiod_core_2) + ');\n\n'
+        # single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(hyperperiod_core_1) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(hyperperiod_core_2) + ';\n\n'
+
+        single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
+
+        single_execution_data_spec += '\tId_Execution : String := "' + taskset_name + '";\n\n'
+
+        data_for_plotting = '\t--  Needed to plot diagrams. These data are stored as strings in order to avoid issue related\n'
+        data_for_plotting += '\t--  to differents types representations in differents languages (Python and Ada).\n'
+        taskset_size = str(taskset.find('tasksetsize').text)
+        taskset_utilization = str(taskset.find('tasksetutilization').text)
+        criticality_factor = str(taskset.find('criticalityfactor').text)
+        hi_crit_proportion = str(taskset.find('perc').text)
+        
+        data_for_plotting += '\tTaskset_Size : String := "' + taskset_size + '";\n\tTaskset_Utilization : String := "' + taskset_utilization + '";\n\tCriticality_Factor : String := "' + criticality_factor + '";\n\tHI_Crit_Proportion : String := "' + hi_crit_proportion + '";\n\n'
+
+        single_execution_data_spec += data_for_plotting
+        single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
+
+        f = open(src_dir + 'single_execution_data.ads', 'w')
+        f.write(single_execution_data_unit)
+        f.close()
+
+        # flash script and board init file
+        
+        template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
+        cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
+        copyfile(template_cora_xsdb_file, taskset_dir + 'cora_xsdb.ini')
+        copyfile(cora_ps7_init_file, taskset_dir + 'cora_ps7_init.tcl')
+
+        f = open(taskset_dir + 'cora_xsdb.ini', 'a')
+        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
+        f.close()
+
+        # Workload_Manager body generation
+        workload_manager_unit = 'package body Workload_Manager is\n\n\ttype Workloads is array (Natural range <>) of Positive;\n\ttype Workloads_Access is access all Workloads;\n\n'
+
+        overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (1 .. ' + str(taskset.find('tasksetsize').text) + ') of Workloads_Access := (\n'
+
+        get_workload_ada_function = '\t--  Get task "ID" \'s workload for its I-th job release.\n'
+        get_workload_ada_function += '\tfunction Get_Workload(ID : Natural; I : Natural) return Positive is\n'
+        get_workload_ada_function += '\tbegin\n\t\tif I in Overall_Workloads (ID)\'Range then\n\t\t\treturn Overall_Workloads (ID)(I);\n\t\telse\n\t\t\treturn Overall_Workloads (ID)(0);\n\t\tend if;\n\tend Get_Workload;\n\n'
+
+        workloads_ada_array = {'naming': [], 'value': []}
+        
+        for core_XML in cores_XML:
+          tasks_XML = core_XML.find('tasks')
+
+          current_hyp = max(hyperperiod_core_1, hyperperiod_core_2)
+
+          for task_XML in tasks_XML.findall('task'):
+            task_index = int(task_XML.find('ID').text)
+
+            workload_manager_unit += '\tWorkloads_T' + str(task_index) + ' : aliased Workloads := ('
+
+            number_of_JR = int(current_hyp // to_microseconds_for_Ada (task_XML.find('period').text))
+            values_for_job_release = []
+
+            # Workloads computation for each job release for current task.
+            if task_XML.find('criticality').text == 'HIGH' and ((core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE')):
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CHI').text)))
+          
+              for i in range (0, number_of_JR-1):
+                has_to_exceed = random.randint(1, 100)
+                if has_to_exceed == 1:
+                  criticality_factor = (float(taskset.find('criticalityfactor').text))
+                  values_for_job_release.append (int((workload * random.uniform(1.2, criticality_factor * 0.8))) + 1)
+                else:
+                  values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+            else:
+              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+
+              if task_XML.find('migrating').text == 'False':
+                for i in range (0, number_of_JR-1):
+                  values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+              else:
+                for i in range (0, number_of_JR-1):
+                  values_for_job_release.append (int((workload * random.uniform(0.5, 0.51))) + 1)
               
 
             for i in range(0, len(values_for_job_release)):
@@ -578,12 +843,6 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
   cores_steady = [c1_steady, c2_steady]
   cores_with_mig = [c1_with_mig, c2_with_mig]
 
-  '''print("SAVE THIS ")
-  print(config.XML_Files[experiment_id][approach])
-  print(c1_steady)
-  print(c2_steady)
-  print(c1_with_mig)
-  print(c2_with_mig)'''
   cores = [[], []]
   utilizations_XML = [[], []]
   tasks_XML = [[], []]
@@ -814,7 +1073,8 @@ def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utiliza
       # @TODO: you are cheating...
       config.last_time_on_core_i_with_additional_migrating_task['c1'] = []
 
-  if mig_on_c_i['c1'] or mig_on_c_i['c2']:
+  # we save tasksets belonging to "nomigration" approach in order to make TSV vs MCS comparison.
+  if (mig_on_c_i['c1'] or mig_on_c_i['c2']) or approach == 'nomigration':
     # print(approach)
     # check_order_preservation(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
     # print_taskset (config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])

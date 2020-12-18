@@ -138,6 +138,7 @@ where_last_mod_mig = ""
 
 XML_Files = {
   1: {
+    'nomigration': './XML_tasksets/experiment_1/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_1/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_1/semi1-BF.xml',
     'semi1WF': './XML_tasksets/experiment_1/semi1-WF.xml',
@@ -147,6 +148,7 @@ XML_Files = {
   },
 
   2: {
+    'nomigration': './XML_tasksets/experiment_2/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_2/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_2/semi1-BF.xml',
     'semi1WF': './XML_tasksets/experiment_2/semi1-WF.xml',
@@ -156,6 +158,7 @@ XML_Files = {
   },
   
   3: {
+    'nomigration': './XML_tasksets/experiment_3/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_3/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_3/semi1-BF.xml',
     'semi1WF': './XML_tasksets/experiment_3/semi1-WF.xml',
@@ -165,6 +168,7 @@ XML_Files = {
   },
 
   4: {
+    'nomigration': './XML_tasksets/experiment_4/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_4/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_4/semi1-BF.xml',
     'semi1WF': './XML_tasksets/experiment_4/semi1-WF.xml',
@@ -176,6 +180,7 @@ XML_Files = {
 
 Ada_Paths = {
   1: {
+    'nomigration': './Ada_tasksets/experiment_1/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_1/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_1/semi1-BF/',
     'semi1WF': './Ada_tasksets/experiment_1/semi1-WF/',
@@ -185,6 +190,7 @@ Ada_Paths = {
   },
 
   2: {
+    'nomigration': './Ada_tasksets/experiment_2/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_2/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_2/semi1-BF/',
     'semi1WF': './Ada_tasksets/experiment_2/semi1-WF/',
@@ -194,6 +200,7 @@ Ada_Paths = {
   },
   
   3: {
+    'nomigration': './Ada_tasksets/experiment_3/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_3/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_3/semi1-BF/',
     'semi1WF': './Ada_tasksets/experiment_3/semi1-WF/',
@@ -203,6 +210,7 @@ Ada_Paths = {
   },
 
   4: {
+    'nomigration': './Ada_tasksets/experiment_4/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_4/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_4/semi1-BF/',
     'semi1WF': './Ada_tasksets/experiment_4/semi1-WF/',
@@ -212,8 +220,51 @@ Ada_Paths = {
   },
 }
 
+Ada_No_Mig_Paths = {
+  1: {
+    'nomigration': './Ada_tasksets_no_mig/experiment_1/nomigration/',
+    'semi1FF': './Ada_tasksets_no_mig/experiment_1/semi1-FF/',
+    'semi1BF': './Ada_tasksets_no_mig/experiment_1/semi1-BF/',
+    'semi1WF': './Ada_tasksets_no_mig/experiment_1/semi1-WF/',
+    'semi2FF': './Ada_tasksets_no_mig/experiment_1/semi2-FF/',
+    'semi2BF': './Ada_tasksets_no_mig/experiment_1/semi2-BF/',
+    'semi2WF': './Ada_tasksets_no_mig/experiment_1/semi2-WF/'
+  },
+
+  2: {
+    'nomigration': './Ada_tasksets_no_mig/experiment_2/nomigration/',
+    'semi1FF': './Ada_tasksets_no_mig/experiment_2/semi1-FF/',
+    'semi1BF': './Ada_tasksets_no_mig/experiment_2/semi1-BF/',
+    'semi1WF': './Ada_tasksets_no_mig/experiment_2/semi1-WF/',
+    'semi2FF': './Ada_tasksets_no_mig/experiment_2/semi2-FF/',
+    'semi2BF': './Ada_tasksets_no_mig/experiment_2/semi2-BF/',
+    'semi2WF': './Ada_tasksets_no_mig/experiment_2/semi2-WF/'
+  },
+  
+  3: {
+    'nomigration': './Ada_tasksets_no_mig/experiment_3/nomigration/',
+    'semi1FF': './Ada_tasksets_no_mig/experiment_3/semi1-FF/',
+    'semi1BF': './Ada_tasksets_no_mig/experiment_3/semi1-BF/',
+    'semi1WF': './Ada_tasksets_no_mig/experiment_3/semi1-WF/',
+    'semi2FF': './Ada_tasksets_no_mig/experiment_3/semi2-FF/',
+    'semi2BF': './Ada_tasksets_no_mig/experiment_3/semi2-BF/',
+    'semi2WF': './Ada_tasksets_no_mig/experiment_3/semi2-WF/'
+  },
+
+  4: {
+    'nomigration': './Ada_tasksets_no_mig/experiment_4/nomigration/',
+    'semi1FF': './Ada_tasksets_no_mig/experiment_4/semi1-FF/',
+    'semi1BF': './Ada_tasksets_no_mig/experiment_4/semi1-BF/',
+    'semi1WF': './Ada_tasksets_no_mig/experiment_4/semi1-WF/',
+    'semi2FF': './Ada_tasksets_no_mig/experiment_4/semi2-FF/',
+    'semi2BF': './Ada_tasksets_no_mig/experiment_4/semi2-BF/',
+    'semi2WF': './Ada_tasksets_no_mig/experiment_4/semi2-WF/'
+  },
+}
+
 Ada_RTEMS_XM_Paths = {
   1: {
+    'nomigration': '../../TSP/Ada_tasksets/experiment_1/nomigration/',
     'semi1FF': '../../TSP/Ada_tasksets/experiment_1/semi1-FF/',
     'semi1BF': '../../TSP/Ada_tasksets/experiment_1/semi1-BF/',
     'semi1WF': '../../TSP/Ada_tasksets/experiment_1/semi1-WF/',
@@ -223,6 +274,7 @@ Ada_RTEMS_XM_Paths = {
   },
 
   2: {
+    'nomigration': '../../TSP/Ada_tasksets/experiment_2/nomigration/',
     'semi1FF': '../../TSP/Ada_tasksets/experiment_2/semi1-FF/',
     'semi1BF': '../../TSP/Ada_tasksets/experiment_2/semi1-BF/',
     'semi1WF': '../../TSP/Ada_tasksets/experiment_2/semi1-WF/',
@@ -232,6 +284,7 @@ Ada_RTEMS_XM_Paths = {
   },
   
   3: {
+    'nomigration': '../../TSP/Ada_tasksets/experiment_3/nomigration/',
     'semi1FF': '../../TSP/Ada_tasksets/experiment_3/semi1-FF/',
     'semi1BF': '../../TSP/Ada_tasksets/experiment_3/semi1-BF/',
     'semi1WF': '../../TSP/Ada_tasksets/experiment_3/semi1-WF/',
@@ -241,6 +294,7 @@ Ada_RTEMS_XM_Paths = {
   },
 
   4: {
+    'nomigration': '../../TSP/Ada_tasksets/experiment_4/nomigration/',
     'semi1FF': '../../TSP/Ada_tasksets/experiment_4/semi1-FF/',
     'semi1BF': '../../TSP/Ada_tasksets/experiment_4/semi1-BF/',
     'semi1WF': '../../TSP/Ada_tasksets/experiment_4/semi1-WF/',
@@ -255,3 +309,5 @@ Ada_RTEMS_Common_Folder = '../../TSP/Ada_tasksets/common/'
 GLOBAL_TASKSET_ID = 0
 
 RUNTIME_DIR = ''
+
+RUNTIME_NO_MIG_DIR = ''
