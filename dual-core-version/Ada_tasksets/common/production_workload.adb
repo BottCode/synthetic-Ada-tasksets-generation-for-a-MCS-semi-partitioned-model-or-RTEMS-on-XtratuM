@@ -250,14 +250,20 @@ package body Production_Workload is
         P3( Y * Whet_Float(Inner_Loop_Var), Y + Z, Z );
       end loop;
 
-
       -- Second version of Module 6:
 
       IJ := IL - (IL - 3) * IK;
       IL := (IL - IK) * (IK - IJ);
       IK := (IL - IK) * IK;
-      E1(IL - 1) := 
-          Whet_Float(IJ + IK + IL);
+
+      if IL - 1 in E1'Range then
+        E1 (IL - 1) := 
+            Whet_Float(IJ + IK + IL);
+      else
+        E1 (E1'Last) := 
+            Whet_Float(IJ + IK + IL);
+      end if;
+
       E1(IK + 1) := Abs( Cos(Z) );
 
 

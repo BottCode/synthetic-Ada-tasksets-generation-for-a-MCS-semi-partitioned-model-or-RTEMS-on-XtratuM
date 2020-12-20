@@ -179,8 +179,8 @@ def run_first_test ():
 
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
-  utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
+  #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
+  #utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
 

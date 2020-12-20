@@ -543,7 +543,7 @@ def save_taskset_as_Ada (experiment_id):
                   values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
               else:
                 for i in range (0, number_of_JR-1):
-                  values_for_job_release.append (int((workload * random.uniform(0.5, 0.51))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
               
 
             for i in range(0, len(values_for_job_release)):
@@ -803,7 +803,7 @@ def save_taskset_as_Ada_NO_MIG (experiment_id):
                   values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
               else:
                 for i in range (0, number_of_JR-1):
-                  values_for_job_release.append (int((workload * random.uniform(0.5, 0.51))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(0.1, 0.11))) + 1)
               
 
             for i in range(0, len(values_for_job_release)):
@@ -833,7 +833,7 @@ def save_taskset_as_XML (c1_steady, c2_steady, c1_with_mig, c2_with_mig, approac
   is_c1_hosting_mig = False
   is_c2_hosting_mig = False
 
-  assert(len(c1_with_mig) + len(c2_with_mig) > 0), "We have to save only those tasksets concerning at least one migrating task."
+  # assert(len(c1_with_mig) + len(c2_with_mig) > 0), "We have to save only those tasksets concerning at least one migrating task."
   
   if len(c1_with_mig) > 0:
     is_c1_hosting_mig = True
@@ -1074,7 +1074,7 @@ def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utiliza
       config.last_time_on_core_i_with_additional_migrating_task['c1'] = []
 
   # we save tasksets belonging to "nomigration" approach in order to make TSV vs MCS comparison.
-  if (mig_on_c_i['c1'] or mig_on_c_i['c2']) or approach == 'nomigration':
+  if (mig_on_c_i['c1'] or mig_on_c_i['c2']): #or approach == 'nomigration':
     # print(approach)
     # check_order_preservation(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
     # print_taskset (config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])

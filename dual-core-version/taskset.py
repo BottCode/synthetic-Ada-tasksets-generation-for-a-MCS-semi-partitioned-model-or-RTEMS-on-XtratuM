@@ -4,6 +4,8 @@ import random
 import functools
 import config
 import perale_taskset_generator
+import sys
+import stafford_fixed_numbers
 
 # Default values taken from "Techniques For The Synthesis Of Multiprocessor Tasksets" by Emberson, et. al
 # cfr. https://www.researchgate.net/publication/241677949_Techniques_For_The_Synthesis_Of_Multiprocessor_Tasksets
@@ -67,7 +69,9 @@ def generate_taskset (n, p, f, maxU, experiment_id):
   for t in t_perale[0]:
     T.append(t[2]/1000)
 
-  U = UUnifast_discard(n, maxU)
+  # U = UUnifast_discard(n, maxU)
+  U = stafford_fixed_numbers.StaffordRandFixedSum(n, 1, maxU, 0.05, 0.6)
+
   #T = log_uniform(n)
   taskset = []
   for i in range(n):
