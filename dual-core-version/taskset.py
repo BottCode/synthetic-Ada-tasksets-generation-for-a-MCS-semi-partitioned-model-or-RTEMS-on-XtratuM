@@ -70,7 +70,7 @@ def generate_taskset (n, p, f, maxU, experiment_id):
     T.append(t[2]/1000)
 
   # U = UUnifast_discard(n, maxU)
-  U = stafford_fixed_numbers.StaffordRandFixedSum(n, 1, maxU, 0.05, 0.6)[0]
+  U = stafford_fixed_numbers.stafford_utilizations(n, maxU, 1, 0.05, 0.6)[0]
 
   #T = log_uniform(n)
   taskset = []
