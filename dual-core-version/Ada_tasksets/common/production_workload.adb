@@ -295,8 +295,11 @@ package body Production_Workload is
 
       -- Note: The actual name of the natural logarithm function used here
       --       is implementation-dependent.  See the comments above.
-
+    if E1(N9) > 0.0 then
       Z := Sqrt( Exp( Log(E1(N9)) / T1 ) );
+    else
+      Z := Sqrt( Exp( Log(1.1) / T1 ) );
+    end if;
 
 
       Sum := Sum + Z;
