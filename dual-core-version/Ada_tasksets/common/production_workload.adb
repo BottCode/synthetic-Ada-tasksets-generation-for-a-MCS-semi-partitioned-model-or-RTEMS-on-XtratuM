@@ -269,8 +269,13 @@ package body Production_Workload is
             Whet_Float(IJ + IK + IL);
       end if;
 
-      E1(IK + 1) := Abs( Cos(Z) );
-
+      if IK + 1 in E1'Range then
+        E1 (IK + 1) :=
+            Abs( Cos(Z) );
+      else
+        E1 (E1'Last) :=
+            Abs( Cos(Z) );
+      end if;
 
       -- Module 9: Array references
 
