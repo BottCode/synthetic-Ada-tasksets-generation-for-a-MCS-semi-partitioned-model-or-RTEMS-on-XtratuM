@@ -532,7 +532,7 @@ def save_taskset_as_Ada (experiment_id):
                 has_to_exceed = random.randint(1, 100)
                 if has_to_exceed == 1:
                   criticality_factor = (float(taskset.find('criticalityfactor').text))
-                  values_for_job_release.append (int((workload * random.uniform(1.2, criticality_factor * 0.8))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(criticality_factor * 0.85, criticality_factor * 0.9))) + 1)
                 else:
                   values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
             else:
@@ -543,7 +543,7 @@ def save_taskset_as_Ada (experiment_id):
                   values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
               else:
                 for i in range (0, number_of_JR-1):
-                  values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
+                  values_for_job_release.append (int((workload * random.uniform(0.7, 0.8))) + 1)
               
 
             for i in range(0, len(values_for_job_release)):
