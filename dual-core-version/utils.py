@@ -338,16 +338,6 @@ def save_taskset_as_Ada (experiment_id):
         
         Main_Unit += main_withed_units + main_unreferenced_units +  main_procedure + main_decl_section + main_body
 
-        taskset_dir = config.Ada_Paths[experiment_id][approach] + taskset_name + '/'
-        os.mkdir(taskset_dir)
-
-        # dir containing src code
-        src_dir = taskset_dir + 'src/'
-        os.mkdir(src_dir)
-        # dir containing compiled code
-        object_code_dir = taskset_dir + 'obj/'
-        os.mkdir(object_code_dir)
-
         # .gpr file project generation
         project_file_name = taskset_name + '.gpr'
         project = 'project ' + taskset_name + ' is\n\n'
@@ -358,20 +348,12 @@ def save_taskset_as_Ada (experiment_id):
         project += '\tpackage Builder is\n        for Switches ("ada") use ("-g", "-O0");\n    end Builder;\n\n'
         project += 'end ' + taskset_name + ';'
 
-        f = open(taskset_dir + project_file_name, 'w')
-        f.write(project)
-        f.close()
-
         # Makefile generation
 
         make_all = 'all:  test\n\n'
         make_test = 'test:\n\tgprbuild ' + project_file_name + '\n\n'
         make_clean = 'clean:\n\tgprclean ' + project_file_name + '\n\n'
         makefile = make_all + make_test + make_clean
-
-        f = open(taskset_dir + 'makefile', 'w')
-        f.write(makefile)
-        f.close()
 
         # Ada taskset unit generation
 
@@ -447,14 +429,6 @@ def save_taskset_as_Ada (experiment_id):
             # print(current_task)
 
         Ada_Unit += '\nend taskset_' + taskset_name + ';\n'
-        # create taskset unit Ada file
-        f = open(src_dir + file_name, 'w')
-        f.write(Ada_Unit)
-        f.close()
-        # create main unit Ada file
-        f = open(src_dir + main_file_name, 'w')
-        f.write(Main_Unit)
-        f.close()
 
         # Single_Execution_Data unit generation.
         # This unit contains specifics data for the current tasksets.
@@ -462,110 +436,269 @@ def save_taskset_as_Ada (experiment_id):
         
         hyperperiod_core_1 = int(compute_hyperperiod(periods_c1))
         hyperperiod_core_2 = int(compute_hyperperiod(periods_c2))
-
-        single_execution_data_unit = ''
-        single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
-        single_execution_data_unit += single_execution_data_withed_package + 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
-        single_execution_data_spec = '\tExperiment_Hyperperiods : array (CPU) of Natural := (CPU\'First => ' + str(hyperperiod_core_1) + ', CPU\'Last => ' + str(hyperperiod_core_2) + ');\n\n'
-        # single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(hyperperiod_core_1) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(hyperperiod_core_2) + ';\n\n'
-
-        single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
-
-        single_execution_data_spec += '\tId_Execution : String := "' + taskset_name + '";\n\n'
-
-        data_for_plotting = '\t--  Needed to plot diagrams. These data are stored as strings in order to avoid issue related\n'
-        data_for_plotting += '\t--  to differents types representations in differents languages (Python and Ada).\n'
         taskset_size = str(taskset.find('tasksetsize').text)
-        taskset_utilization = str(taskset.find('tasksetutilization').text)
-        criticality_factor = str(taskset.find('criticalityfactor').text)
-        hi_crit_proportion = str(taskset.find('perc').text)
-        
-        data_for_plotting += '\tTaskset_Size : String := "' + taskset_size + '";\n\tTaskset_Utilization : String := "' + taskset_utilization + '";\n\tCriticality_Factor : String := "' + criticality_factor + '";\n\tHI_Crit_Proportion : String := "' + hi_crit_proportion + '";\n\n'
 
-        single_execution_data_spec += data_for_plotting
-        single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
-
-        f = open(src_dir + 'single_execution_data.ads', 'w')
-        f.write(single_execution_data_unit)
-        f.close()
-
-        # flash script and board init file
-        
-        template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
-        cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
-        copyfile(template_cora_xsdb_file, taskset_dir + 'cora_xsdb.ini')
-        copyfile(cora_ps7_init_file, taskset_dir + 'cora_ps7_init.tcl')
-
-        f = open(taskset_dir + 'cora_xsdb.ini', 'a')
-        f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
-        f.close()
-
-        # Workload_Manager body generation
-        workload_manager_unit = 'package body Workload_Manager is\n\n\ttype Workloads is array (Natural range <>) of Positive;\n\ttype Workloads_Access is access all Workloads;\n\n'
-
-        overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (1 .. ' + str(taskset.find('tasksetsize').text) + ') of Workloads_Access := (\n'
-
-        get_workload_ada_function = '\t--  Get task "ID" \'s workload for its I-th job release.\n'
-        get_workload_ada_function += '\tfunction Get_Workload(ID : Natural; I : Natural) return Positive is\n'
-        get_workload_ada_function += '\tbegin\n\t\tif I in Overall_Workloads (ID)\'Range then\n\t\t\treturn Overall_Workloads (ID)(I);\n\t\telse\n\t\t\treturn Overall_Workloads (ID)(0);\n\t\tend if;\n\tend Get_Workload;\n\n'
-
-        workloads_ada_array = {'naming': [], 'value': []}
-        
-        for core_XML in cores_XML:
-          tasks_XML = core_XML.find('tasks')
-
-          current_hyp = max(hyperperiod_core_1, hyperperiod_core_2)
-
-          for task_XML in tasks_XML.findall('task'):
-            task_index = int(task_XML.find('ID').text)
-
-            workload_manager_unit += '\tWorkloads_T' + str(task_index) + ' : aliased Workloads := ('
-
-            number_of_JR = int(current_hyp // to_microseconds_for_Ada (task_XML.find('period').text))
-            values_for_job_release = []
-
-            # Workloads computation for each job release for current task.
-            if task_XML.find('criticality').text == 'HIGH' and ((core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE')):
-              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
-
-              for i in range (0, number_of_JR-1):
-                has_to_exceed = random.randint(1, 100)
-                if has_to_exceed == 1:
-                  criticality_factor = (float(taskset.find('criticalityfactor').text))
-                  values_for_job_release.append (int((workload * random.uniform(criticality_factor * 0.85, criticality_factor * 0.9))) + 1)
-                else:
-                  values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
-            else:
-              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
-
-              if task_XML.find('migrating').text == 'False':
-                for i in range (0, number_of_JR-1):
-                  values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
-              else:
-                for i in range (0, number_of_JR-1):
-                  values_for_job_release.append (int((workload * random.uniform(0.7, 0.8))) + 1)
-              
-
-            for i in range(0, len(values_for_job_release)):
-              if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
-                workload_manager_unit += '\n\t\t\t\t'
-              if i < len(values_for_job_release)-1:
-                workload_manager_unit += str(values_for_job_release[i]) + ', '
-              else:
-                workload_manager_unit += str(values_for_job_release[i]) + ');\n'
+        if experiment_id == 4 and int (taskset_size) >= 25:
+          # Generate config.EXPERIMENTS_REPETITIONS differents workloads sets corresponding to config.EXPERIMENTS_REPETITIONS experiment executions
+          for repetition_id in range(1, config.EXPERIMENTS_REPETITIONS + 1):
+            task_printed = 0
             
-            overall_workloads_ada_array += '\t\t' + str(task_index) + ' => Workloads_T' + str(task_index) + '\'Access'
-            if task_printed != (int(taskset.find('tasksetsize').text) - 1):
-              overall_workloads_ada_array += ',\n'
-            else:
-              overall_workloads_ada_array += '\n\t);\n\n'
-            task_printed += 1
+            single_execution_data_unit = ''
+            single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
+            single_execution_data_unit += single_execution_data_withed_package + 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
+            single_execution_data_spec = '\tExperiment_Hyperperiods : array (CPU) of Natural := (CPU\'First => ' + str(hyperperiod_core_1) + ', CPU\'Last => ' + str(hyperperiod_core_2) + ');\n\n'
+            # single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(hyperperiod_core_1) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(hyperperiod_core_2) + ';\n\n'
 
-        # Workload_Manager file unit generation
-        workload_manager_unit += overall_workloads_ada_array + get_workload_ada_function + 'end Workload_Manager;'
-        f = open(src_dir + 'workload_manager.adb', 'w')
-        f.write(workload_manager_unit)
-        f.close()
+            single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
+
+            single_execution_data_spec += '\tId_Execution : String := "' + taskset_name + '_v' + str(repetition_id) + '";\n\n'
+
+            data_for_plotting = '\t--  Needed to plot diagrams. These data are stored as strings in order to avoid issue related\n'
+            data_for_plotting += '\t--  to differents types representations in differents languages (Python and Ada).\n'
+            
+            taskset_utilization = str(taskset.find('tasksetutilization').text)
+            criticality_factor = str(taskset.find('criticalityfactor').text)
+            hi_crit_proportion = str(taskset.find('perc').text)
+            
+            data_for_plotting += '\tTaskset_Size : String := "' + taskset_size + '";\n\tTaskset_Utilization : String := "' + taskset_utilization + '";\n\tCriticality_Factor : String := "' + criticality_factor + '";\n\tHI_Crit_Proportion : String := "' + hi_crit_proportion + '";\n\n'
+
+            single_execution_data_spec += data_for_plotting
+            single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
+
+            # Workload_Manager body generation
+            workload_manager_unit = 'package body Workload_Manager is\n\n\ttype Workloads is array (Natural range <>) of Positive;\n\ttype Workloads_Access is access all Workloads;\n\n'
+
+            overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (1 .. ' + str(taskset.find('tasksetsize').text) + ') of Workloads_Access := (\n'
+
+            get_workload_ada_function = '\t--  Get task "ID" \'s workload for its I-th job release.\n'
+            get_workload_ada_function += '\tfunction Get_Workload(ID : Natural; I : Natural) return Positive is\n'
+            get_workload_ada_function += '\tbegin\n\t\tif I in Overall_Workloads (ID)\'Range then\n\t\t\treturn Overall_Workloads (ID)(I);\n\t\telse\n\t\t\treturn Overall_Workloads (ID)(0);\n\t\tend if;\n\tend Get_Workload;\n\n'
+
+            workloads_ada_array = {'naming': [], 'value': []}
+            
+            for core_XML in cores_XML:
+              tasks_XML = core_XML.find('tasks')
+
+              current_hyp = max(hyperperiod_core_1, hyperperiod_core_2)
+
+              for task_XML in tasks_XML.findall('task'):
+                task_index = int(task_XML.find('ID').text)
+
+                workload_manager_unit += '\tWorkloads_T' + str(task_index) + ' : aliased Workloads := ('
+
+                number_of_JR = int(current_hyp // to_microseconds_for_Ada (task_XML.find('period').text))
+                values_for_job_release = []
+
+                # Workloads computation for each job release for current task.
+                if task_XML.find('criticality').text == 'HIGH' and ((core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE')):
+                  workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+
+                  for i in range (0, number_of_JR-1):
+                    has_to_exceed = random.randint(1, 100)
+                    if has_to_exceed == 1:
+                      criticality_factor = (float(taskset.find('criticalityfactor').text))
+                      values_for_job_release.append (int((workload * random.uniform(criticality_factor * 0.85, criticality_factor * 0.9))) + 1)
+                    else:
+                      values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+                else:
+                  workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+
+                  if task_XML.find('migrating').text == 'False':
+                    for i in range (0, number_of_JR-1):
+                      values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+                  else:
+                    for i in range (0, number_of_JR-1):
+                      values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
+                  
+
+                for i in range(0, len(values_for_job_release)):
+                  if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
+                    workload_manager_unit += '\n\t\t\t\t'
+                  if i < len(values_for_job_release)-1:
+                    workload_manager_unit += str(values_for_job_release[i]) + ', '
+                  else:
+                    workload_manager_unit += str(values_for_job_release[i]) + ');\n'
+                
+                overall_workloads_ada_array += '\t\t' + str(task_index) + ' => Workloads_T' + str(task_index) + '\'Access'
+                if task_printed != (int(taskset.find('tasksetsize').text) - 1):
+                  overall_workloads_ada_array += ',\n'
+                else:
+                  overall_workloads_ada_array += '\n\t);\n\n'
+                task_printed += 1
+
+            # Save everything
+
+            taskset_dir = config.Ada_Paths[experiment_id][approach] + taskset_name + '_v' + str(repetition_id)
+            os.mkdir(taskset_dir)
+
+            # dir containing src code
+            src_dir = taskset_dir + '/src/'
+            os.mkdir(src_dir)
+            # dir containing compiled code
+            object_code_dir = taskset_dir + '/obj/'
+            os.mkdir(object_code_dir)
+            # .gpr file
+            f = open(taskset_dir + '/' + project_file_name, 'w')
+            f.write(project)
+            f.close()
+            # Makefile
+            f = open(taskset_dir + '/makefile', 'w')
+            f.write(makefile)
+            f.close()
+            # taskset unit Ada file
+            f = open(src_dir + '/' + file_name, 'w')
+            f.write(Ada_Unit)
+            f.close()
+            # main unit Ada file
+            f = open(src_dir + '/' + main_file_name, 'w')
+            f.write(Main_Unit)
+            f.close()
+            # Single_Execution_Data unit file
+            f = open(src_dir + '/' + 'single_execution_data.ads', 'w')
+            f.write(single_execution_data_unit)
+            f.close()
+
+            # Workload_Manager file unit generation
+            workload_manager_unit += overall_workloads_ada_array + get_workload_ada_function + 'end Workload_Manager;'
+            f = open(src_dir + '/' + 'workload_manager.adb', 'w')
+            f.write(workload_manager_unit)
+            f.close()
+            # flash script and board init file
+            f = open(taskset_dir + '/cora_xsdb.ini', 'a')
+            f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
+            f.close()
+            template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
+            cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
+            copyfile(template_cora_xsdb_file, taskset_dir + '/cora_xsdb.ini')
+            copyfile(cora_ps7_init_file, taskset_dir + '/cora_ps7_init.tcl')
+        else:
+          single_execution_data_unit = ''
+          single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
+          single_execution_data_unit += single_execution_data_withed_package + 'package Single_Execution_Data is\n\tpragma Preelaborate;\n\n'
+          single_execution_data_spec = '\tExperiment_Hyperperiods : array (CPU) of Natural := (CPU\'First => ' + str(hyperperiod_core_1) + ', CPU\'Last => ' + str(hyperperiod_core_2) + ');\n\n'
+          # single_execution_data_spec = '\tExperiment_Hyperperiod_CPU_1 : Natural := ' + str(hyperperiod_core_1) + ';\n\n\tExperiment_Hyperperiod_CPU_2 : Natural := ' + str(hyperperiod_core_2) + ';\n\n'
+
+          single_execution_data_spec += '\tId_Experiment : Integer := ' + str(experiment_id) + ';\n\tApproach : String := "' + approach.upper() + '";\n\tTaskset_Id : Integer := ' + str(taskset_id) + ';\n\n'
+
+          single_execution_data_spec += '\tId_Execution : String := "' + taskset_name + '";\n\n'
+
+          data_for_plotting = '\t--  Needed to plot diagrams. These data are stored as strings in order to avoid issue related\n'
+          data_for_plotting += '\t--  to differents types representations in differents languages (Python and Ada).\n'
+          taskset_size = str(taskset.find('tasksetsize').text)
+          taskset_utilization = str(taskset.find('tasksetutilization').text)
+          criticality_factor = str(taskset.find('criticalityfactor').text)
+          hi_crit_proportion = str(taskset.find('perc').text)
+          
+          data_for_plotting += '\tTaskset_Size : String := "' + taskset_size + '";\n\tTaskset_Utilization : String := "' + taskset_utilization + '";\n\tCriticality_Factor : String := "' + criticality_factor + '";\n\tHI_Crit_Proportion : String := "' + hi_crit_proportion + '";\n\n'
+
+          single_execution_data_spec += data_for_plotting
+          single_execution_data_unit += single_execution_data_spec + 'end Single_Execution_Data;'
+          # Workload_Manager body generation
+          workload_manager_unit = 'package body Workload_Manager is\n\n\ttype Workloads is array (Natural range <>) of Positive;\n\ttype Workloads_Access is access all Workloads;\n\n'
+
+          overall_workloads_ada_array = '\n\tOverall_Workloads : constant array (1 .. ' + str(taskset.find('tasksetsize').text) + ') of Workloads_Access := (\n'
+
+          get_workload_ada_function = '\t--  Get task "ID" \'s workload for its I-th job release.\n'
+          get_workload_ada_function += '\tfunction Get_Workload(ID : Natural; I : Natural) return Positive is\n'
+          get_workload_ada_function += '\tbegin\n\t\tif I in Overall_Workloads (ID)\'Range then\n\t\t\treturn Overall_Workloads (ID)(I);\n\t\telse\n\t\t\treturn Overall_Workloads (ID)(0);\n\t\tend if;\n\tend Get_Workload;\n\n'
+
+          workloads_ada_array = {'naming': [], 'value': []}
+          
+          for core_XML in cores_XML:
+            tasks_XML = core_XML.find('tasks')
+
+            current_hyp = max(hyperperiod_core_1, hyperperiod_core_2)
+
+            for task_XML in tasks_XML.findall('task'):
+              task_index = int(task_XML.find('ID').text)
+
+              workload_manager_unit += '\tWorkloads_T' + str(task_index) + ' : aliased Workloads := ('
+
+              number_of_JR = int(current_hyp // to_microseconds_for_Ada (task_XML.find('period').text))
+              values_for_job_release = []
+
+              # Workloads computation for each job release for current task.
+              if task_XML.find('criticality').text == 'HIGH' and ((core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE')):
+                workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+
+                for i in range (0, number_of_JR-1):
+                  has_to_exceed = random.randint(1, 100)
+                  if has_to_exceed == 1:
+                    criticality_factor = (float(taskset.find('criticalityfactor').text))
+                    values_for_job_release.append (int((workload * random.uniform(criticality_factor * 0.85, criticality_factor * 0.9))) + 1)
+                  else:
+                    values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+              else:
+                workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+
+                if task_XML.find('migrating').text == 'False':
+                  for i in range (0, number_of_JR-1):
+                    values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+                else:
+                  for i in range (0, number_of_JR-1):
+                    values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
+                
+
+              for i in range(0, len(values_for_job_release)):
+                if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
+                  workload_manager_unit += '\n\t\t\t\t'
+                if i < len(values_for_job_release)-1:
+                  workload_manager_unit += str(values_for_job_release[i]) + ', '
+                else:
+                  workload_manager_unit += str(values_for_job_release[i]) + ');\n'
+              
+              overall_workloads_ada_array += '\t\t' + str(task_index) + ' => Workloads_T' + str(task_index) + '\'Access'
+              if task_printed != (int(taskset.find('tasksetsize').text) - 1):
+                overall_workloads_ada_array += ',\n'
+              else:
+                overall_workloads_ada_array += '\n\t);\n\n'
+              task_printed += 1
+
+          # Save everything
+
+          taskset_dir = config.Ada_Paths[experiment_id][approach] + taskset_name
+          os.mkdir(taskset_dir)
+
+          # dir containing src code
+          src_dir = taskset_dir + '/src/'
+          os.mkdir(src_dir)
+          # dir containing compiled code
+          object_code_dir = taskset_dir + '/obj/'
+          os.mkdir(object_code_dir)
+          # .gpr file
+          f = open(taskset_dir + '/' + project_file_name, 'w')
+          f.write(project)
+          f.close()
+          # Makefile
+          f = open(taskset_dir + '/makefile', 'w')
+          f.write(makefile)
+          f.close()
+          # taskset unit Ada file
+          f = open(src_dir + '/' + file_name, 'w')
+          f.write(Ada_Unit)
+          f.close()
+          # main unit Ada file
+          f = open(src_dir + '/' + main_file_name, 'w')
+          f.write(Main_Unit)
+          f.close()
+          # Single_Execution_Data unit file
+          f = open(src_dir + '/' + 'single_execution_data.ads', 'w')
+          f.write(single_execution_data_unit)
+          f.close()
+
+          # Workload_Manager file unit generation
+          workload_manager_unit += overall_workloads_ada_array + get_workload_ada_function + 'end Workload_Manager;'
+          f = open(src_dir + '/' + 'workload_manager.adb', 'w')
+          f.write(workload_manager_unit)
+          f.close()
+          # flash script and board init file
+          f = open(taskset_dir + '/cora_xsdb.ini', 'a')
+          f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
+          f.close()
+          template_cora_xsdb_file = './Ada_tasksets/template_cora_xsdb.ini'
+          cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
+          copyfile(template_cora_xsdb_file, taskset_dir + '/cora_xsdb.ini')
+          copyfile(cora_ps7_init_file, taskset_dir + '/cora_ps7_init.tcl')
 
 # generate a GPR project compiling with Ravenscar with no supporting for migrations
 def save_taskset_as_Ada_NO_MIG (experiment_id):
