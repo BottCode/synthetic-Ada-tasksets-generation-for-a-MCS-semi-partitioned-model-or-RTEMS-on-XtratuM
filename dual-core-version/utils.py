@@ -571,6 +571,9 @@ def save_taskset_as_Ada (experiment_id):
             cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
             copyfile(template_cora_xsdb_file, taskset_dir + '/cora_xsdb.ini')
             copyfile(cora_ps7_init_file, taskset_dir + '/cora_ps7_init.tcl')
+            f = open(taskset_dir + '/cora_xsdb.ini', 'a')
+            f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
+            f.close()
         else:
           single_execution_data_unit = ''
           single_execution_data_withed_package = 'with System.Multiprocessors;\nuse System.Multiprocessors;\n\n' 
@@ -620,9 +623,12 @@ def save_taskset_as_Ada (experiment_id):
               # Workloads computation for each job release for current task.
               if task_XML.find('criticality').text == 'HIGH' and ((core_XML.tag == 'core1' and taskset.find('migonc2').text == 'TRUE') or (core_XML.tag == 'core2' and taskset.find('migonc1').text == 'TRUE')):
                 workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
-
+                if experiment_id == 4:
+                  higher_bound_exceeding_distribution = 200
+                else:
+                  higher_bound_exceeding_distribution = 100
                 for i in range (0, number_of_JR-1):
-                  has_to_exceed = random.randint(1, 100)
+                  has_to_exceed = random.randint(1, higher_bound_exceeding_distribution)
                   if has_to_exceed == 1:
                     criticality_factor = (float(taskset.find('criticalityfactor').text))
                     values_for_job_release.append (int((workload * random.uniform(criticality_factor * 0.85, criticality_factor * 0.9))) + 1)
@@ -699,6 +705,9 @@ def save_taskset_as_Ada (experiment_id):
           cora_ps7_init_file = './Ada_tasksets/cora_ps7_init.tcl'
           copyfile(template_cora_xsdb_file, taskset_dir + '/cora_xsdb.ini')
           copyfile(cora_ps7_init_file, taskset_dir + '/cora_ps7_init.tcl')
+          f = open(taskset_dir + '/cora_xsdb.ini', 'a')
+          f.write('dow ' + 'obj/main_' + taskset_name + '\ncon\nafter ' + str( int(max(hyperperiod_core_1, hyperperiod_core_2)/1000)+5000))
+          f.close()
 
 # generate a GPR project compiling with Ravenscar with no supporting for migrations
 def save_taskset_as_Ada_NO_MIG (experiment_id):

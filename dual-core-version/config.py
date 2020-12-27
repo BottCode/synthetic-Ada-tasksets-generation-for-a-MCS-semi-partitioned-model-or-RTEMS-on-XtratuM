@@ -306,7 +306,7 @@ Ada_RTEMS_XM_Paths = {
 
 Ada_RTEMS_Common_Folder = '../../TSP/Ada_tasksets/common/'
 
-EXPERIMENTS_REPETITIONS = 3
+EXPERIMENTS_REPETITIONS = 10
 
 GLOBAL_TASKSET_ID = 0
 
