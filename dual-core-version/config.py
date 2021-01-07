@@ -12,7 +12,7 @@ CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = True
+CHECK_SEMI_2_WF    = False
 
 NUMBER_OF_APPROACHES = 7
 
@@ -264,43 +264,19 @@ Ada_No_Mig_Paths = {
 
 Ada_RTEMS_XM_Paths = {
   1: {
-    'nomigration': '../../TSP/Ada_tasksets/experiment_1/nomigration/',
-    'semi1FF': '../../TSP/Ada_tasksets/experiment_1/semi1-FF/',
-    'semi1BF': '../../TSP/Ada_tasksets/experiment_1/semi1-BF/',
-    'semi1WF': '../../TSP/Ada_tasksets/experiment_1/semi1-WF/',
-    'semi2FF': '../../TSP/Ada_tasksets/experiment_1/semi2-FF/',
-    'semi2BF': '../../TSP/Ada_tasksets/experiment_1/semi2-BF/',
-    'semi2WF': '../../TSP/Ada_tasksets/experiment_1/semi2-WF/'
+    'nomigration': '../../TSP/Ada_tasksets/experiment_1/nomigration/'
   },
 
   2: {
-    'nomigration': '../../TSP/Ada_tasksets/experiment_2/nomigration/',
-    'semi1FF': '../../TSP/Ada_tasksets/experiment_2/semi1-FF/',
-    'semi1BF': '../../TSP/Ada_tasksets/experiment_2/semi1-BF/',
-    'semi1WF': '../../TSP/Ada_tasksets/experiment_2/semi1-WF/',
-    'semi2FF': '../../TSP/Ada_tasksets/experiment_2/semi2-FF/',
-    'semi2BF': '../../TSP/Ada_tasksets/experiment_2/semi2-BF/',
-    'semi2WF': '../../TSP/Ada_tasksets/experiment_2/semi2-WF/'
+    'nomigration': '../../TSP/Ada_tasksets/experiment_2/nomigration/'
   },
   
   3: {
-    'nomigration': '../../TSP/Ada_tasksets/experiment_3/nomigration/',
-    'semi1FF': '../../TSP/Ada_tasksets/experiment_3/semi1-FF/',
-    'semi1BF': '../../TSP/Ada_tasksets/experiment_3/semi1-BF/',
-    'semi1WF': '../../TSP/Ada_tasksets/experiment_3/semi1-WF/',
-    'semi2FF': '../../TSP/Ada_tasksets/experiment_3/semi2-FF/',
-    'semi2BF': '../../TSP/Ada_tasksets/experiment_3/semi2-BF/',
-    'semi2WF': '../../TSP/Ada_tasksets/experiment_3/semi2-WF/'
+    'nomigration': '../../TSP/Ada_tasksets/experiment_3/nomigration/'
   },
 
   4: {
-    'nomigration': '../../TSP/Ada_tasksets/experiment_4/nomigration/',
-    'semi1FF': '../../TSP/Ada_tasksets/experiment_4/semi1-FF/',
-    'semi1BF': '../../TSP/Ada_tasksets/experiment_4/semi1-BF/',
-    'semi1WF': '../../TSP/Ada_tasksets/experiment_4/semi1-WF/',
-    'semi2FF': '../../TSP/Ada_tasksets/experiment_4/semi2-FF/',
-    'semi2BF': '../../TSP/Ada_tasksets/experiment_4/semi2-BF/',
-    'semi2WF': '../../TSP/Ada_tasksets/experiment_4/semi2-WF/'
+    'nomigration': '../../TSP/Ada_tasksets/experiment_4/nomigration/'
   },
 }
 

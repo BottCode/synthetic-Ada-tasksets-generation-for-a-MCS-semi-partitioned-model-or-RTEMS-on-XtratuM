@@ -130,6 +130,9 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
 
         Ada_Units = {'p1': '', 'p2': ''}
         Ada_Units_Files_Name = {'p1': 'taskset_' + taskset_name + '_p1.ads', 'p2': 'taskset_' + taskset_name + '_p2.ads'}
+        # Ada Set Of Procedures
+        Ada_SOP_Specs = {'p1': '', 'p2': ''}
+        Ada_SOP_Body = {'p1': '', 'p2': ''}
         Single_Execution_Data = {'p1': '', 'p2': ''}
         Main_Units = {'p1': '', 'p2': ''}
         Mains_Files_Name = {'p1': '', 'p2': ''}
@@ -140,7 +143,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
         os.mkdir(taskset_dir)
 
         # dir containing src code
-        Srcs_Dir = {'p1': taskset_dir + 'First_Partition/', 'p2': taskset_dir + 'Second_Partition/'}
+        Srcs_Dir = {'p1': taskset_dir + 'p0/', 'p2': taskset_dir + 'p1/'}
         Apps_Dir = {'p1': Srcs_Dir['p1'] + 'app/', 'p2': Srcs_Dir['p2'] + 'app/'}
         
         os.mkdir(Srcs_Dir['p1'])
@@ -152,50 +155,92 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
         for p in Main_Units:
           Main_Units[p] = 'main_' + Tasksets_Name[p]
           Mains_Files_Name[p] = Main_Units[p] + '.adb'
-          main = 'with System;\nwith Periodic_Tasks;\n\nwith taskset_' + Tasksets_Name[p] + ';\n'
-          main += 'pragma Unreferenced (taskset_'  + Tasksets_Name[p] + ');\n\n'
+          main = 'with System;\nwith Periodic_Tasks;\n\n'
           main += 'procedure ' + Main_Units[p] + ' is\n'
           main += "\tpragma Priority (System.Priority'Last);\n"
           main += 'begin\n\tPeriodic_Tasks.Init;\nend ' + Main_Units[p] + ';'
+
           # create main unit Ada file
           f = open(Apps_Dir[p] + Mains_Files_Name[p], 'w')
           f.write(main)
           f.close()
 
-          Ada_Units[p] = 'with Periodic_Tasks;\nuse Periodic_Tasks;\n\npackage taskset_' + Tasksets_Name[p] + ' is\n\n'
+          Ada_Units[p] = 'with Ada.Real_Time; use Ada.Real_Time;\n\nwith Ada.Text_IO;\n\nwith System.Multiprocessors;\nuse System.Multiprocessors;\n\n'
+          Ada_Units[p] += 'with Single_Execution_Data;\nwith Production_Workload;\nwith Set_Of_Procedures;\nwith Workload_Manager;\nwith Initial_Delay;\n\nwith RTEMS;\nwith RTEMS.TASKS;\nwith RTEMS.CPU_Usage;\n\n'
+          # Ada_Units[p] += 'use Periodic_Tasks;\n\npackage taskset_' + Tasksets_Name[p] + ' is\n\n'
+          Ada_Units[p] += 'package body Periodic_Tasks is\n\n'
+          Ada_Units[p] += '\tfunction Get_Longest_Hyperperiod return Natural is\n\tbegin\n'
+          Ada_Units[p] += '\t\tif Single_Execution_Data.Experiment_Hyperperiods (1) > Single_Execution_Data.Experiment_Hyperperiods (2) then\n'
+          Ada_Units[p] += '\t\t\treturn Single_Execution_Data.Experiment_Hyperperiods (1);\n\t\tend if;\n\n'
+          Ada_Units[p] += '\t\treturn Single_Execution_Data.Experiment_Hyperperiods (2);\n\t end Get_Longest_Hyperperiod;\n\n'
+          Ada_Units[p] += '\t------------\n\t--  Init  --\n\t------------\n\n'
+          Ada_Units[p] += '\tprocedure Init is\n\t\tNext_Period : constant Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);\n\t\tPeriod_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Get_Longest_Hyperperiod);\n\n'
+          
+          Ada_SOP_Specs[p] += 'with RTEMS.TASKS;\n\npackage Set_Of_Procedures is\n\n'
+          Ada_SOP_Body[p] += 'with Ada.Real_Time; use Ada.Real_Time;\n\nwith Single_Execution_Data;\nwith Production_Workload;\nwith Workload_Manager;\nwith Initial_Delay;\n\nwith Ada.Text_IO;\n\n'
+          Ada_SOP_Body[p] += 'package body Set_Of_Procedures is\n\n\tprocedure Work (Period : Positive; ID : Natural);\n\tpragma No_Return (Work);\n\n'
+          Ada_SOP_Body[p] += '\tprocedure Work (Period : Positive; ID : Natural) is\n'
+          Ada_SOP_Body[p] += '\t\tNext_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);\n\t\tPeriod_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Period);\n\t\tI : Natural := 0;\n'
+          Ada_SOP_Body[p] += '\tbegin\n\t\tloop\n\t\t\tdelay until Next_Period;\n\n\t\t\tProduction_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));\n\n\t\t\tI := I + 1;\n\n\t\t\tNext_Period := Next_Period + Period_To_Add;\n\t\tend loop;\n\tend Work;\n\n'
+
           current_partition_XML = taskset.find ('core1') if p == 'p1' else taskset.find ('core2')
+          tasks_on_current_partition_XML = current_partition_XML.find('tasks')
+
+          for t in tasks_on_current_partition_XML.findall('task'):
+            Ada_Units[p] += '\t\tID_T_' + str(t.find('ID').text) + ' : RTEMS.ID;\n'
+            Ada_Units[p] += '\t\tSTATUS_T_' + str(t.find('ID').text) + ' : RTEMS.STATUS_CODES;\n'
+
+            Ada_SOP_Specs[p] += '\tprocedure T_' + str(t.find('ID').text) + '_Body (ARGUMENT : in RTEMS.TASKS.ARGUMENT);\n'
+            Ada_SOP_Specs[p] += '\tpragma Convention (C, T_' + str(t.find('ID').text) + '_Body);\n\n'
+
+            Ada_SOP_Body[p] += '\tprocedure T_' + str(t.find('ID').text) + '_Body (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n\t\tPeriod : Positive := ' + str(to_microseconds_for_Ada (t.find('period').text)) + ';\n'
+            Ada_SOP_Body[p] += '\t\tID : Natural := ' + str(t.find('ID').text) + ';\n'
+            Ada_SOP_Body[p] += '\tbegin\n\t\tWork (Period, ID);\n\tend T_' + str(t.find('ID').text) + '_Body;\n\n'
+
+            periods[p].append (int(to_microseconds_for_Ada (t.find('period').text)))
+
+          Ada_Units[p] += '\n\t\tID_T_LAST : RTEMS.ID;\n\t\tSTATUS_T_LAST : RTEMS.STATUS_CODES;\n\tbegin\n\n'
+          Ada_SOP_Specs[p] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT);\n'
+          Ada_SOP_Specs[p] += '\tpragma Convention (C, LAST);\n\nend Set_Of_Procedures;'
+          Ada_SOP_Body[p] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n\t\tNext_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Nanoseconds (1_000_000_000);\n'
+          Ada_SOP_Body[p] += '\t\tPeriod_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Nanoseconds (1_000_000_000);\n\tbegin\n\t\tdelay until (Next_Period) + (Period_To_Add * 10);\n\t\tloop\n\t\t\tnull;\n\t\t\tAda.Text_IO.Put_Line ("end?");\n\t\tend loop;\n\tend LAST;\n\nend Set_Of_Procedures;'
+
+          for t in tasks_on_current_partition_XML.findall('task'):
+            t_id = int(str(t.find('ID').text))
+
+            if len(str(t_id)) == 1:
+              t_id_RTEMS_classic_api_format = '0' + str(t_id)
+            else:
+              t_id_RTEMS_classic_api_format = str(t_id)
+            
+            Ada_Units[p] += '\t\tRTEMS.TASKS.CREATE(\n'
+            Ada_Units[p] += '\t\t\tRTEMS.BUILD_NAME(\'T\', \'_\', \'' + t_id_RTEMS_classic_api_format[0] + '\', \'' + t_id_RTEMS_classic_api_format[1] + '\'),\n'
+            Ada_Units[p] += '\t\t\t' + str(t.find('priority').text) + ',\n\t\t\tRTEMS.MINIMUM_STACK_SIZE,\n\t\t\tRTEMS.PREEMPT,\n\t\t\tRTEMS.DEFAULT_ATTRIBUTES,\n\t\t\tID_T_' + str(t_id) + ',\n\t\t\tSTATUS_T_' + str(t_id) + '\n\t\t);\n\n'
+
+          Ada_Units[p] += '\t\tRTEMS.TASKS.CREATE(\n\t\tRTEMS.BUILD_NAME(\'L\', \'A\', \'S\', \'T\'),\n\t\t\t255,\n\t\t\tRTEMS.MINIMUM_STACK_SIZE,\n\t\t\tRTEMS.PREEMPT,\n\t\t\tRTEMS.DEFAULT_ATTRIBUTES,\n\t\t\tID_T_LAST,\n\t\t\tSTATUS_T_LAST\n\t\t);\n'
+          Ada_Units[p] += '\n\t\t--  Start the tasks\n\n'
+          Ada_Units[p] += '\t\tRTEMS.TASKS.START(\n\t\t\tID_T_LAST,\n\t\t\tSet_Of_Procedures.LAST\'ACCESS,\n\t\t\t0,\n\t\t\tSTATUS_T_LAST\n\t\t);\n\n'
+
+          for t in tasks_on_current_partition_XML.findall('task'):
+            t_id = int(str(t.find('ID').text))
+            Ada_Units[p] += '\t\tRTEMS.TASKS.START(\n'
+            Ada_Units[p] += '\t\t\tID_T_' + str(t_id) + ',\n\t\t\tSet_Of_Procedures.T_' + str(t_id) + '_Body\'ACCESS,\n\t\t\t0,\n\t\t\tSTATUS_T_' + str(t_id) + '\n\t\t);\n\n'
+
+          Ada_Units[p] += '\t\tdelay until Next_Period + Period_To_Add;\n\n'
+          Ada_Units[p] += '\t\tif Single_Execution_Data.Partition_Id = "P1" then\n\t\t\tAda.Text_IO.Put_Line("");\n\t\t\tAda.Text_IO.Put_Line("Printing log");\n\t\t\t--  rtems_cpu_usage_report\n\t\t\tRTEMS.CPU_Usage.Report;\n\t\tend if;\n\n\t\tloop\n\t\t\tnull;\n\t\tend loop;\n\tend Init;\nend Periodic_Tasks;'
 
           tasks_XML = current_partition_XML.find ('tasks')
 
-          # Generate taskset for current partition
-          for task_XML in tasks_XML.findall('task'):
-            current_task = '  T_'
-            current_task += task_XML.find('ID').text + ' : '
-
-            if task_XML.find('criticality').text == 'HIGH':
-              current_task += 'High_Crit ('
-              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CHI').text)))
-            else:
-              current_task += 'Low_Crit ('
-              workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
-            
-            current_task += 'Id => ' + task_XML.find('ID').text + ', '
-            current_task += 'Pri => ' + str(int(task_XML.find('priority').text)) + ', ' 
-            current_task += 'Low_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CLO').text)) + ', '
-
-            if task_XML.find('criticality').text == 'HIGH':
-              current_task += 'High_Critical_Budget => ' + str(to_microseconds_for_Ada (task_XML.find('CHI').text)) + ', '
-            
-            current_task += 'Workload => ' + str(workload) + ', ' # + task_XML.find('workload').text + ', '
-            current_task += 'Period => ' + str(to_microseconds_for_Ada (task_XML.find('period').text)) + ');'
-
-            periods[p].append (int(to_microseconds_for_Ada (task_XML.find('period').text)))
-
-            Ada_Units[p] += current_task + '\n'
-
-          Ada_Units[p] += '\nend taskset_' + Tasksets_Name[p] + ';'
-          f = open(Apps_Dir[p] + Ada_Units_Files_Name[p], 'w')
+          f = open(Apps_Dir[p] + 'periodic_tasks.adb', 'w')
           f.write(Ada_Units[p])
+          f.close()
+
+          f = open(Apps_Dir[p] + 'set_of_procedures.ads', 'w')
+          f.write(Ada_SOP_Specs[p])
+          f.close()
+
+          f = open(Apps_Dir[p] + 'set_of_procedures.adb', 'w')
+          f.write(Ada_SOP_Body[p])
           f.close()
    
           copyfile (common_folder + 'initial_delay.ads', Apps_Dir[p] + 'initial_delay.ads')
@@ -203,13 +248,11 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
           copyfile (common_folder + 'production_workload.adb', Apps_Dir[p] + 'production_workload.adb')
           copyfile (common_folder + 'production_workload.ads', Apps_Dir[p] + 'production_workload.ads')
           copyfile (common_folder + 'periodic_tasks.ads', Apps_Dir[p] + 'periodic_tasks.ads')
-          copyfile (common_folder + 'periodic_tasks.adb', Apps_Dir[p] + 'periodic_tasks.adb')
           copyfile (common_folder + 'workload_manager.ads', Apps_Dir[p] + 'workload_manager.ads')
           copyfile (common_folder + 'config.h', Apps_Dir[p] + 'config.h')
           copyfile (common_folder + 'Makefile_partition_' + p, Apps_Dir[p] + 'Makefile')
           copyfile (common_folder + 'Makefile_partition.am', Apps_Dir[p] + 'Makefile.am')
           copyfile (common_folder + 'Makefile_partition.in', Apps_Dir[p] + 'Makefile.in')
-          
           copyfile (common_folder + 'rtems_init.c', Srcs_Dir[p] + 'rtems_init.c')
 
           edit_partition_makefile (Apps_Dir[p] + 'Makefile', 'PROGRAM=' + Main_Units[p])
@@ -1207,7 +1250,7 @@ def check_size_taskset_with_mig (total, approach, experiment_id, taskset_utiliza
       config.last_time_on_core_i_with_additional_migrating_task['c1'] = []
 
   # we save tasksets belonging to "nomigration" approach in order to make TSV vs MCS comparison.
-  if (mig_on_c_i['c1'] or mig_on_c_i['c2']): #or approach == 'nomigration':
+  if (mig_on_c_i['c1'] or mig_on_c_i['c2']) or approach == 'nomigration':
     # print(approach)
     # check_order_preservation(config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'], config.last_time_on_core_i_with_additional_migrating_task['c1'], config.last_time_on_core_i_with_additional_migrating_task['c2'])
     # print_taskset (config.last_time_on_core_i['c1'], config.last_time_on_core_i['c2'])
