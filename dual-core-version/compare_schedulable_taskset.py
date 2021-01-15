@@ -40,6 +40,8 @@ def produce_results_experiment(experiment_id):
     results_to_plot = {}
 
     for approach in config.XML_Files[experiment_id]:
+        if approach == 'nomigration':
+            continue
         results_to_plot[approach] = []
         x_axis_levels[approach] = {}
 

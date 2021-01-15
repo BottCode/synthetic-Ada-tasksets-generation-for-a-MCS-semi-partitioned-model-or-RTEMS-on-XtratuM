@@ -6,6 +6,7 @@ import config
 import perale_taskset_generator
 import sys
 import stafford_fixed_numbers
+from drs import drs
 
 # Default values taken from "Techniques For The Synthesis Of Multiprocessor Tasksets" by Emberson, et. al
 # cfr. https://www.researchgate.net/publication/241677949_Techniques_For_The_Synthesis_Of_Multiprocessor_Tasksets
@@ -64,15 +65,16 @@ def generate_taskset (n, p, f, maxU, experiment_id):
   config.GLOBAL_TASKSET_ID += 1
   HI_tot = n * p
   LO_tot = n - HI_tot
-  t_perale = perale_taskset_generator.create_taskset_hyper_113400000_10_200_with_some_long(n, maxU, 1, 35)
+  t_perale = perale_taskset_generator.create_taskset_hyper_113400000_10_200_with_some_long(n, maxU, 1, max_armonicity)
 
   for t in t_perale[0]:
     T.append(t[2]/1000)
 
-  # U = UUnifast_discard(n, maxU)
-  U = stafford_fixed_numbers.stafford_utilizations(n, maxU, 1, 0.05, 0.6)[0]
+  # The Dirichlet Rescale (DRS) algorithm
+  # https://sigbed.org/2020/12/21/the-dirichlet-rescale-drs-algorithm-a-general-purpose-method-underpinning-synthetic-task-set-generation/
+  U = drs (n, maxU, [0.6 for _ in range(n)], [0.05 for _ in range(n)])
 
-  #T = log_uniform(n)
+  # T = log_uniform(n)
   taskset = []
   for i in range(n):
     new_task = {
@@ -95,7 +97,7 @@ def generate_taskset (n, p, f, maxU, experiment_id):
       'migration_route': [],
       # Priorities for each core
       'P': {'c1': -1, 'c2': -1}
-      }
+    }
     # Randomly set tasks as HI-crit (but always respect the percentage of HI-crit tasks "p")
     HI_flag = random.choice([True, False])
     if HI_flag and HI_tot <= 0:
