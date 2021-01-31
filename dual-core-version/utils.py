@@ -38,14 +38,41 @@ def to_microseconds_for_Ada (period):
   #  print(c)
   return final_number
 
+def microseconds_to_kilowhetstone_for_Ada_On_RTEMS_On_XM (microseconds):
+  multiplier = 0
+  divider = 0
+  # According to some evaluations:
+  #  - 3 KW    => 100 microseconds
+  #  - 36 KW   => 1000 microseconds
+  #  - 366 KW  => 10000 microseconds
+  #  - 3667 KW => 100000 microseconds 
+
+  if microseconds < 1000:
+    multiplier = 3
+    divider = 100
+  elif microseconds < 10000:
+    multiplier = 36
+    divider = 1000
+  elif microseconds < 100000:
+    multiplier = 366
+    divider = 10000
+  else:
+    multiplier = 3667
+    divider = 100000
+  
+  result = int( (microseconds/divider) * multiplier)
+  if result == 0:
+    result = 1
+  return result
+
 def microseconds_to_kilowhetstone_for_ravenscar_runtime (microseconds):
   multiplier = 0
   divider = 0
   # According to some evaluations:
-  #  - 26 KW    => 100 microseconds          +/- 1.75  microseconds
-  #  - 264 KW   => 1000 microseconds         +/- 1.8  microseconds
-  #  - 2650 KW  => 10000 microseconds        +/- 1.8  microseconds
-  #  - 26510 KW => 100000 microseconds (1ms) +/- 1.875 microseconds
+  #  - 13 KW    => 100 microseconds          +/- 1.75  microseconds
+  #  - 132 KW   => 1000 microseconds         +/- 1.8  microseconds
+  #  - 1325 KW  => 10000 microseconds        +/- 1.8  microseconds
+  #  - 13258 KW => 100000 microseconds +/- 1.875 microseconds
 
   if microseconds < 1000:
     multiplier = 13
@@ -157,7 +184,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
           Mains_Files_Name[p] = Main_Units[p] + '.adb'
           main = 'with System;\nwith Periodic_Tasks;\n\n'
           main += 'procedure ' + Main_Units[p] + ' is\n'
-          main += "\tpragma Priority (System.Priority'Last);\n"
+          main += "\tpragma Priority (114);\n"
           main += 'begin\n\tPeriodic_Tasks.Init;\nend ' + Main_Units[p] + ';'
 
           # create main unit Ada file
@@ -178,10 +205,13 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
           
           Ada_SOP_Specs[p] += 'with RTEMS.TASKS;\n\npackage Set_Of_Procedures is\n\n'
           Ada_SOP_Body[p] += 'with Ada.Real_Time; use Ada.Real_Time;\n\nwith Single_Execution_Data;\nwith Production_Workload;\nwith Workload_Manager;\nwith Initial_Delay;\n\nwith Ada.Text_IO;\n\n'
-          Ada_SOP_Body[p] += 'package body Set_Of_Procedures is\n\n\tprocedure Work (Period : Positive; ID : Natural);\n\tpragma No_Return (Work);\n\n'
-          Ada_SOP_Body[p] += '\tprocedure Work (Period : Positive; ID : Natural) is\n'
-          Ada_SOP_Body[p] += '\t\tNext_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);\n\t\tPeriod_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Period);\n\t\tI : Natural := 0;\n'
-          Ada_SOP_Body[p] += '\tbegin\n\t\tloop\n\t\t\tdelay until Next_Period;\n\n\t\t\tProduction_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));\n\n\t\t\tI := I + 1;\n\n\t\t\tNext_Period := Next_Period + Period_To_Add;\n\t\tend loop;\n\tend Work;\n\n'
+          Ada_SOP_Body[p] += 'package body Set_Of_Procedures is\n\n\tprocedure Work (Period : Duration; ID : Natural);\n\tpragma No_Return (Work);\n\n'
+          Ada_SOP_Body[p] += '\tprocedure Work (Period : Duration; ID : Natural) is\n'
+          Ada_SOP_Body[p] += '\t\t--  Next_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Microseconds (Initial_Delay.Delay_Time);\n\t\t--  Period_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Microseconds (Period);\n\t\tI : Natural := 0;\n'
+          Ada_SOP_Body[p] += '\t\tFake_Status : RTEMS.STATUS_CODES;\n\t\tFake_Previous_Mode : RTEMS.MODE;\t\tDelayed_At : Ada.Real_Time.Time;\n\t\tWaked_At : Ada.Real_Time.Time;\n\t\tDeadline : Ada.Real_Time.Time;\n\t\tTime_To_Sleep : Duration := 0.0;\n\t\tNow : Ada.Real_Time.Time;\n'
+          # Ada_SOP_Body[p] += '\tbegin\n\t\tloop\n\t\t\tdelay until Next_Period;\n\n\t\t\tProduction_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));\n\n\t\t\tI := I + 1;\n\n\t\t\tNext_Period := Next_Period + Period_To_Add;\n\t\tend loop;\n\tend Work;\n\n'
+          Ada_SOP_Body[p] += '\tbegin\n\n\t\tdelay 2.0;\n\n\t\tloop\n\t\t\tDeadline := Ada.Real_Time.Clock + To_Time_Span (Period);\n\n\t\t\tProduction_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));\n\n\t\t\tI := I + 1;\n\n\t\t\tNow := Ada.Real_Time.Clock;\n\n\t\t\tif Now <= Deadline then\n\n\t\t\t\tRTEMS.TASKS.MODE (RTEMS.NO_PREEMPT, 0, Fake_Previous_Mode, Fake_Status);\n\n\t\t\t\tTime_To_Sleep := To_Duration (Deadline - Ada.Real_Time.Clock);\n\t\t\t\t--  Delayed_At := Ada.Real_Time.Clock;\n\t\t\t\tdelay Time_To_Sleep;\n\t\t\t\t--  Waked_At := Ada.Real_Time.Clock;\n\n\t\t\t\tRTEMS.TASKS.MODE (RTEMS.PREEMPT, 0, Fake_Previous_Mode, Fake_Status);\n\t\t\t\t--  Ada.Text_IO.Put_Line ("Error Task " & Natural\'Image (ID) & ": " & Duration\'Image (Abs (Time_To_Sleep - (To_Duration (Waked_At - Delayed_At))) * 1_000) & " milliseconds");\n'
+          Ada_SOP_Body[p] += '\n\t\t\telse\n\t\t\t\tAda.Text_IO.Put_Line ("DM Task " & Natural\'Image (ID));\n\t\t\tend if;\n\t\tend loop;\n\tend Work;\n\n'
 
           current_partition_XML = taskset.find ('core1') if p == 'p1' else taskset.find ('core2')
           tasks_on_current_partition_XML = current_partition_XML.find('tasks')
@@ -193,7 +223,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
             Ada_SOP_Specs[p] += '\tprocedure T_' + str(t.find('ID').text) + '_Body (ARGUMENT : in RTEMS.TASKS.ARGUMENT);\n'
             Ada_SOP_Specs[p] += '\tpragma Convention (C, T_' + str(t.find('ID').text) + '_Body);\n\n'
 
-            Ada_SOP_Body[p] += '\tprocedure T_' + str(t.find('ID').text) + '_Body (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n\t\tPeriod : Positive := ' + str(to_microseconds_for_Ada (t.find('period').text)) + ';\n'
+            Ada_SOP_Body[p] += '\tprocedure T_' + str(t.find('ID').text) + '_Body (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n\t\tPeriod : Duration := ' + str((to_microseconds_for_Ada (t.find('period').text)) / 1000000) + ';\n'
             Ada_SOP_Body[p] += '\t\tID : Natural := ' + str(t.find('ID').text) + ';\n'
             Ada_SOP_Body[p] += '\tbegin\n\t\tWork (Period, ID);\n\tend T_' + str(t.find('ID').text) + '_Body;\n\n'
 
@@ -202,8 +232,9 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
           Ada_Units[p] += '\n\t\tID_T_LAST : RTEMS.ID;\n\t\tSTATUS_T_LAST : RTEMS.STATUS_CODES;\n\tbegin\n\n'
           Ada_SOP_Specs[p] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT);\n'
           Ada_SOP_Specs[p] += '\tpragma Convention (C, LAST);\n\nend Set_Of_Procedures;'
-          Ada_SOP_Body[p] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n\t\tNext_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Nanoseconds (1_000_000_000);\n'
-          Ada_SOP_Body[p] += '\t\tPeriod_To_Add : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Nanoseconds (1_000_000_000);\n\tbegin\n\t\tdelay until (Next_Period) + (Period_To_Add * 10);\n\t\tloop\n\t\t\tnull;\n\t\t\tAda.Text_IO.Put_Line ("end?");\n\t\tend loop;\n\tend LAST;\n\nend Set_Of_Procedures;'
+          # Ada_SOP_Body[p] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n\t\tNext_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Nanoseconds (1_000_000_000);\n'
+          Ada_SOP_Body[p] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n'
+          Ada_SOP_Body[p] += '\tbegin\n\t\tdelay ' + str ((max(hyperperiods['p1'], hyperperiods['p2']) / 1000000) + 2.0) + ';\n\t\tloop\n\t\t\tnull;\n\t\t\tAda.Text_IO.Put_Line ("end?");\n\t\tend loop;\n\tend LAST;\n\nend Set_Of_Procedures;'
 
           for t in tasks_on_current_partition_XML.findall('task'):
             t_id = int(str(t.find('ID').text))
@@ -215,19 +246,21 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
             
             Ada_Units[p] += '\t\tRTEMS.TASKS.CREATE(\n'
             Ada_Units[p] += '\t\t\tRTEMS.BUILD_NAME(\'T\', \'_\', \'' + t_id_RTEMS_classic_api_format[0] + '\', \'' + t_id_RTEMS_classic_api_format[1] + '\'),\n'
-            Ada_Units[p] += '\t\t\t' + str(t.find('priority').text) + ',\n\t\t\tRTEMS.MINIMUM_STACK_SIZE,\n\t\t\tRTEMS.PREEMPT,\n\t\t\tRTEMS.DEFAULT_ATTRIBUTES,\n\t\t\tID_T_' + str(t_id) + ',\n\t\t\tSTATUS_T_' + str(t_id) + '\n\t\t);\n\n'
+            Ada_Units[p] += '\t\t\t' + str(144 - int(t.find('priority').text)) + ',\n\t\t\tRTEMS.MINIMUM_STACK_SIZE,\n\t\t\tRTEMS.PREEMPT,\n\t\t\tRTEMS.DEFAULT_ATTRIBUTES,\n\t\t\tID_T_' + str(t_id) + ',\n\t\t\tSTATUS_T_' + str(t_id) + '\n\t\t);\n\n'
 
-          Ada_Units[p] += '\t\tRTEMS.TASKS.CREATE(\n\t\tRTEMS.BUILD_NAME(\'L\', \'A\', \'S\', \'T\'),\n\t\t\t255,\n\t\t\tRTEMS.MINIMUM_STACK_SIZE,\n\t\t\tRTEMS.PREEMPT,\n\t\t\tRTEMS.DEFAULT_ATTRIBUTES,\n\t\t\tID_T_LAST,\n\t\t\tSTATUS_T_LAST\n\t\t);\n'
+          # Ada_Units[p] += '\t\tRTEMS.TASKS.CREATE(\n\t\tRTEMS.BUILD_NAME(\'L\', \'A\', \'S\', \'T\'),\n\t\t\t255,\n\t\t\tRTEMS.MINIMUM_STACK_SIZE,\n\t\t\tRTEMS.PREEMPT,\n\t\t\tRTEMS.DEFAULT_ATTRIBUTES,\n\t\t\tID_T_LAST,\n\t\t\tSTATUS_T_LAST\n\t\t);\n'
           Ada_Units[p] += '\n\t\t--  Start the tasks\n\n'
-          Ada_Units[p] += '\t\tRTEMS.TASKS.START(\n\t\t\tID_T_LAST,\n\t\t\tSet_Of_Procedures.LAST\'ACCESS,\n\t\t\t0,\n\t\t\tSTATUS_T_LAST\n\t\t);\n\n'
+          # Ada_Units[p] += '\t\tRTEMS.TASKS.START(\n\t\t\tID_T_LAST,\n\t\t\tSet_Of_Procedures.LAST\'ACCESS,\n\t\t\t0,\n\t\t\tSTATUS_T_LAST\n\t\t);\n\n'
 
           for t in tasks_on_current_partition_XML.findall('task'):
             t_id = int(str(t.find('ID').text))
             Ada_Units[p] += '\t\tRTEMS.TASKS.START(\n'
             Ada_Units[p] += '\t\t\tID_T_' + str(t_id) + ',\n\t\t\tSet_Of_Procedures.T_' + str(t_id) + '_Body\'ACCESS,\n\t\t\t0,\n\t\t\tSTATUS_T_' + str(t_id) + '\n\t\t);\n\n'
 
-          Ada_Units[p] += '\t\tdelay until Next_Period + Period_To_Add;\n\n'
-          Ada_Units[p] += '\t\tif Single_Execution_Data.Partition_Id = "P1" then\n\t\t\tAda.Text_IO.Put_Line("");\n\t\t\tAda.Text_IO.Put_Line("Printing log");\n\t\t\t--  rtems_cpu_usage_report\n\t\t\tRTEMS.CPU_Usage.Report;\n\t\tend if;\n\n\t\tloop\n\t\t\tnull;\n\t\tend loop;\n\tend Init;\nend Periodic_Tasks;'
+          Ada_Units[p] += '\t\tdelay To_Duration (Ada.Real_Time.Microseconds (Get_Longest_Hyperperiod));\n\n'
+          Ada_Units[p] += '\t\t--  RTEMS.CPU_Usage.RESET;\n\n'
+          Ada_Units[p] += '\t\tif Single_Execution_Data.Partition_Id = "P2" then\n\t\t\tdelay 2.0;\n\t\t\tAda.Text_IO.Put_Line ("Second Partition");\n\t\tend if;\n'
+          Ada_Units[p] += '\n\t\tAda.Text_IO.Put_Line ("");\n\n\t\tif Single_Execution_Data.Partition_Id = "P1" then\n\t\t\tAda.Text_IO.Put_Line ("New Execution");\n\t\t\tAda.Text_IO.Put_Line (Single_Execution_Data.Id_Execution);\n\t\t\tAda.Text_IO.Put_Line ("First Partition");\n\t\tend if;\n\n\t\tAda.Text_IO.Put_Line ("");\n\n\t\t--  rtems_cpu_usage_report\n\t\tRTEMS.CPU_Usage.Report;\n\n\t\tloop\n\t\t\tnull;\n\t\tend loop;\n\tend Init;\nend Periodic_Tasks;'
 
           tasks_XML = current_partition_XML.find ('tasks')
 
@@ -314,9 +347,9 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
             values_for_job_release = []
 
             # Workloads computation for each job release for current task.
-            workload = microseconds_to_kilowhetstone_for_ravenscar_runtime( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
+            workload = microseconds_to_kilowhetstone_for_Ada_On_RTEMS_On_XM ( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
             for i in range (0, number_of_JR-1):
-              values_for_job_release.append (int((workload * random.uniform(0.4, 0.6))) + 1)
+              values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
 
             for i in range(0, len(values_for_job_release)):
               if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
@@ -345,7 +378,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
         copyfile (common_folder + 'xm_cf.arm.xml', taskset_dir + 'xm_cf.arm.xml')
 
         f = open(taskset_dir + 'cora_xsdb.ini', 'a')
-        f.write('\n\nafter ' + str( int(max(hyperperiods['p1'], hyperperiods['p2'])/1000)+5000))
+        f.write('\n\nafter ' + str( int(max(hyperperiods['p1'], hyperperiods['p2']) /1000) + 4000))
         f.close()
 
           

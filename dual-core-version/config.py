@@ -12,7 +12,7 @@ CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = True
+CHECK_SEMI_2_WF    = False
 
 NUMBER_OF_APPROACHES = 7
 

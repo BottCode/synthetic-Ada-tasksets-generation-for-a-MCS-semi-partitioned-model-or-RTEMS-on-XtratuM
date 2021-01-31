@@ -180,7 +180,7 @@ def run_first_test ():
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
   #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  # utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
 
@@ -232,7 +232,7 @@ def run_second_test ():
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
   #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  # utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
 
@@ -261,7 +261,7 @@ def run_third_test ():
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
   #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  # utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   third_test_bar.finish()
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
 
@@ -283,7 +283,7 @@ def run_fourth_test ():
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
   #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  # utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
+  utils.save_taskset_as_Ada_On_RTEMS_On_XM(experiment_id)
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
 
