@@ -348,8 +348,12 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
 
             # Workloads computation for each job release for current task.
             workload = microseconds_to_kilowhetstone_for_Ada_On_RTEMS_On_XM ( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
-            for i in range (0, number_of_JR-1):
-              values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+            if task_XML.find('migrating').text == 'False':
+              for i in range (0, number_of_JR-1):
+                values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+            else:
+              for i in range (0, number_of_JR-1):
+                values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
 
             for i in range(0, len(values_for_job_release)):
               if ((i+1) % 300) == 0: # start a new line in order to avoid compilation issues.
