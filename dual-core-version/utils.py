@@ -260,7 +260,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
           Ada_Units[p] += '\t\tdelay To_Duration (Ada.Real_Time.Microseconds (Get_Longest_Hyperperiod));\n\n'
           Ada_Units[p] += '\t\t--  RTEMS.CPU_Usage.RESET;\n\n'
           Ada_Units[p] += '\t\tif Single_Execution_Data.Partition_Id = "P2" then\n\t\t\tdelay 2.0;\n\t\t\tAda.Text_IO.Put_Line ("Second Partition");\n\t\tend if;\n'
-          Ada_Units[p] += '\n\t\tAda.Text_IO.Put_Line ("");\n\n\t\tif Single_Execution_Data.Partition_Id = "P1" then\n\t\t\tAda.Text_IO.Put_Line ("New Execution");\n\t\t\tAda.Text_IO.Put_Line (Single_Execution_Data.Id_Execution);\n\t\t\tAda.Text_IO.Put_Line ("First Partition");\n\t\tend if;\n\n\t\tAda.Text_IO.Put_Line ("");\n\n\t\t--  rtems_cpu_usage_report\n\t\tRTEMS.CPU_Usage.Report;\n\n\t\tloop\n\t\t\tnull;\n\t\tend loop;\n\tend Init;\nend Periodic_Tasks;'
+          Ada_Units[p] += '\n\t\tAda.Text_IO.Put_Line ("");\n\n\t\tif Single_Execution_Data.Partition_Id = "P1" then\n\t\t\tAda.Text_IO.Put_Line ("New Execution");\n\t\t\tAda.Text_IO.Put_Line (Single_Execution_Data.Id_Execution);\n\t\t\tAda.Text_IO.Put_Line ("Taskset_Size: " & Single_Execution_Data.Taskset_Size);\n\t\t\tAda.Text_IO.Put_Line ("Criticality Factor: " & Single_Execution_Data.Criticality_Factor);\n\t\t\tAda.Text_IO.Put_Line ("HI_Crit_Proportion: " & Single_Execution_Data.HI_Crit_Proportion);\n\t\t\tAda.Text_IO.Put_Line ("Taskset_Utilization: " & Single_Execution_Data.Taskset_Utilization);\n\t\t\tAda.Text_IO.Put_Line ("First Partition");\n\t\tend if;\n\n\t\tAda.Text_IO.Put_Line ("");\n\n\t\t--  rtems_cpu_usage_report\n\t\tRTEMS.CPU_Usage.Report;\n\n\t\tloop\n\t\t\tnull;\n\t\tend loop;\n\tend Init;\nend Periodic_Tasks;'
 
           tasks_XML = current_partition_XML.find ('tasks')
 
@@ -350,7 +350,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
             workload = microseconds_to_kilowhetstone_for_Ada_On_RTEMS_On_XM ( to_microseconds_for_Ada (float(task_XML.find('CLO').text)))
             if task_XML.find('migrating').text == 'False':
               for i in range (0, number_of_JR-1):
-                values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+                values_for_job_release.append (int((workload * random.uniform(0.80, 0.90))) + 1)
             else:
               for i in range (0, number_of_JR-1):
                 values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
@@ -585,10 +585,20 @@ def save_taskset_as_Ada (experiment_id):
 
                   if task_XML.find('migrating').text == 'False':
                     for i in range (0, number_of_JR-1):
-                      values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
+                      has_to_exceed = random.randint(1, 50)
+                      if has_to_exceed == 1:
+                        criticality_factor = (float(taskset.find('criticalityfactor').text))
+                        values_for_job_release.append (int((workload * random.uniform(criticality_factor * 0.85, criticality_factor * 0.9))) + 1)
+                      else:
+                        values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
                   else:
                     for i in range (0, number_of_JR-1):
-                      values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
+                      has_to_exceed = random.randint(1, 50)
+                      if has_to_exceed == 1:
+                        criticality_factor = (float(taskset.find('criticalityfactor').text))
+                        values_for_job_release.append (int((workload * random.uniform(criticality_factor * 0.85, criticality_factor * 0.9))) + 1)
+                      else:
+                        values_for_job_release.append (int((workload * random.uniform(0.45, 0.5))) + 1)
                   
 
                 for i in range(0, len(values_for_job_release)):
@@ -722,7 +732,7 @@ def save_taskset_as_Ada (experiment_id):
                     values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
                 else:
                   for i in range (0, number_of_JR-1):
-                    values_for_job_release.append (int((workload * random.uniform(0.4, 0.5))) + 1)
+                    values_for_job_release.append (int((workload * random.uniform(0.8, 0.9))) + 1)
                 
 
               for i in range(0, len(values_for_job_release)):

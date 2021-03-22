@@ -17,6 +17,7 @@ with Single_Execution_Data;
 with Production_Workload;
 with Workload_Manager;
 with Initial_Delay;
+with MBTA;
 
 package body Periodic_Tasks is
 
@@ -103,6 +104,7 @@ package body Periodic_Tasks is
       --  Ada.Text_IO.Put_Line ("----------------------");
       Ada.Text_IO.Put_Line("");
       Ada.Text_IO.Put_Line("");
+      --  MBTA.Print_Log_RTE_Primitive_Duration;
 
       Ada.Text_IO.Put_Line ("<execution>");
       Ada.Text_IO.Put_Line ("<supportingmigrations>TRUE</supportingmigrations>"); 

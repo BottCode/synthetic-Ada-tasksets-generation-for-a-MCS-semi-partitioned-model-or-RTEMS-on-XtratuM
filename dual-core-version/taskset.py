@@ -108,6 +108,7 @@ def generate_taskset (n, p, f, maxU, experiment_id):
       HI_tot -= 1
       new_task['HI'] = True
       new_task['C(HI)'] = U[i] * T[i]
+      #print (new_task['C(HI)'])
       new_task['C(LO)'] = new_task['C(HI)'] / f
     else:
       new_task['C(LO)'] = U[i] * T[i]

@@ -4,6 +4,7 @@ import copy
 import functools
 import config
 import utils
+import overhead_parameter
 
 # Reset "considered" flag on cores
 # This is invoked when a new task is selected for scheduling
@@ -82,9 +83,22 @@ def findHp (i, tasks, core_id):
       result.append(other_task)
   return result
 
+# Find tasks with priority lower than Ti's (= tasks[i]) priority
+def findLp (i, tasks, core_id):
+  result = []
+  task = tasks[i]
+  for j in range(len(tasks)):
+    if j == i:
+      assert (tasks[j] == tasks[i]), 'Indexes did not match in findHp'
+      continue
+    other_task = tasks[j]
+    if other_task['P'][core_id] < task['P'][core_id]:
+      result.append(other_task)
+  return result
+
 # Vestal's algorithm (classic version)
 def calcRi (task, hp):
-  start_Ri = task['C(LO)']
+  start_Ri = task['C(LO)'] + overhead_parameter.get_initial_overhead (config.PLATFORM)
   if task['HI']:
     start_Ri = task['C(HI)']
   Ri = start_Ri
@@ -109,7 +123,7 @@ def calcRi_monitor (task, hp):
     start_Ri = task['C(HI)']
   Ri = start_Ri
   while True:
-    newRi = start_Ri
+    newRi = start_Ri + overhead_parameter.get_initial_overhead (config.PLATFORM)
     for hp_task in hp:
       hp_C = hp_task['C(LO)']
       # Only consider C(HI) interference if both task j and task i are HI-crit
@@ -123,19 +137,28 @@ def calcRi_monitor (task, hp):
     Ri = newRi
 
 # This modified version of Vestal's algorithm always considers HI-crit interference from HI-crit tasks
-def calcRi_alwaysHICrit (task, hp):
+def calcRi_alwaysHICrit (task, hp, lp):
   start_Ri = task['C(LO)']
   if task['HI']:
     start_Ri = task['C(HI)']
-  Ri = start_Ri
+  
+  # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
+  Ri = start_Ri + overhead_parameter.get_initial_overhead (config.PLATFORM)
   while True:
     newRi = start_Ri
     for hp_task in hp:
-      hp_C = hp_task['C(LO)']
+      hp_C = hp_task['C(LO)'] + overhead_parameter.get_refined_CLO (config.PLATFORM)
       # Only consider C(HI) interference if task i is HI-crit
       if hp_task['HI']:
-        hp_C = hp_task['C(HI)']
-      newRi += math.ceil(Ri / hp_task['D']) * hp_C
+        hp_C = hp_task['C(HI)'] + overhead_parameter.get_refined_CHI (config.PLATFORM)
+      newRi += (math.ceil(Ri / hp_task['D']) * hp_C)
+      # Add interference due to the "demanded" hp tasks clock overhead (see the previous link)
+      newRi += (math.ceil(Ri / hp_task['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
+
+    # Add interference due to the "demanded" lp tasks clock overhead (see the previous link)
+    for lp_task in lp:
+      newRi += overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler")
+
     if newRi > task['D']:
       return None
     if newRi == Ri:
@@ -144,6 +167,7 @@ def calcRi_alwaysHICrit (task, hp):
 
 def audsley_rta_no_migration (i, tasks, core_id):
   task = tasks[i]
+  lp = findLp(i, tasks, core_id)
   hp = findHp(i, tasks, core_id)
   for hp_task in hp:
     assert (hp_task['P'][core_id] > task['P'][core_id] or hp_task['P'][core_id] < 0), 'Error: findHP returned task with wrong priority'
@@ -153,7 +177,7 @@ def audsley_rta_no_migration (i, tasks, core_id):
   elif (config.VESTAL_WITH_MONITOR):
     Ri = calcRi_monitor(task, hp)
   elif (config.ALWAYS_HI_CRIT):
-    Ri = calcRi_alwaysHICrit(task, hp)
+    Ri = calcRi_alwaysHICrit(task, hp, lp)
   if Ri is None:
     return False
   assert (Ri <= task['D']), 'No migration algorithm produced a response time greater than the deadline'
@@ -318,12 +342,20 @@ def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
   return assigned
 
 # Calculate Ri(LO) (cfr. Equation 7 in Xu, Burns 2019)
-def calcRiLO (task, hp):
-  RiLO = task['C(LO)']
+def calcRiLO (task, hp, lp):
+  RiLO = task['C(LO)'] + overhead_parameter.get_initial_overhead (config.PLATFORM)
   while True:
     newRiLO = task['C(LO)']
     for hp_task in hp:
-      newRiLO += math.ceil(RiLO / hp_task['D']) * hp_task['C(LO)']
+      newRiLO += math.ceil(RiLO / hp_task['D']) * (hp_task['C(LO)'] + overhead_parameter.get_refined_CLO (config.PLATFORM))
+      # Add interference due to the "demanded" hp tasks clock overhead
+      # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
+      newRiLO += (math.ceil(RiLO / hp_task['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
+
+    # Add interference due to the "demanded" lp tasks clock overhead (see the previous link)
+    for lp_task in lp:
+      newRiLO += overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler")
+
     if newRiLO > task['D']:
       return None
     if newRiLO == RiLO:
@@ -339,6 +371,13 @@ def findCHp (task, tasks, core_id):
   result = []
   for other_task in tasks:
     if not other_task['migrating'] and (other_task['P'][core_id] > task['P'][core_id]):
+      result.append(other_task)
+  return result
+
+def findCHp_lp (task, tasks, core_id):
+  result = []
+  for other_task in tasks:
+    if not other_task['migrating'] and (other_task['P'][core_id] < task['P'][core_id]):
       result.append(other_task)
   return result
 
@@ -358,6 +397,22 @@ def findCHpLO (task, tasks, core_id):
       result.append(other_task)
   return result
 
+def findCHpHI_lp (task, tasks, core_id):
+  result = []
+  for other_task in tasks:
+    assert (other_task['P'][core_id] >= 0), 'No priorities assigned for this core'
+    if other_task['HI'] and (other_task['P'][core_id] < task['P'][core_id]):
+      result.append(other_task)
+  return result
+
+def findCHpLO_lp (task, tasks, core_id):
+  result = []
+  for other_task in tasks:
+    assert (other_task['P'][core_id] >= 0), 'No priorities assigned for this core'
+    if not other_task['HI'] and (other_task['P'][core_id] < task['P'][core_id]):
+      result.append(other_task)
+  return result
+
 def findCHpMIG (task, tasks, core_id):
   result = []
   for other_task in tasks:
@@ -365,20 +420,43 @@ def findCHpMIG (task, tasks, core_id):
       result.append(other_task)
   return result
 
-def riMIXStep (task, chp, chpMIG):
+def findCHpMIG_lp (task, tasks, core_id):
+  result = []
+  for other_task in tasks:
+    if other_task['migrating'] and (other_task['P'][core_id] < task['P'][core_id]):
+      result.append(other_task)
+  return result
+
+def riMIXStep (task, chp, chpMIG, chp_lp, chpMIG_lp):
   start_val = task['C(LO)']
   if task['HI']:
     start_val = task['C(HI)']
-  RiMIX = start_val
+  RiMIX = start_val + overhead_parameter.get_initial_overhead (config.PLATFORM)
   while True:
     newRiMIX = start_val
     for chp_task in chp:
-      chp_val = chp_task['C(LO)']
+      chp_val = chp_task['C(LO)'] + overhead_parameter.get_refined_CLO (config.PLATFORM)
       if chp_task['HI']:
-        chp_val = chp_task['C(HI)']
+        chp_val = chp_task['C(HI)'] + overhead_parameter.get_refined_CHI (config.PLATFORM)
       newRiMIX += math.ceil(RiMIX / chp_task['D']) * chp_val
+      # Add interference due to the "demanded" hp tasks clock overhead
+      # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
+      newRiMIX += (math.ceil(RiMIX / chp_task['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
+
+    # Add interference due to the "demanded" lp tasks clock overhead (see the previous link)
+    for lp_task in chp_lp:
+      newRiMIX += overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler")
+
     for chp_mig in chpMIG:
-      newRiMIX += math.ceil(task['Ri(LO)'] / chp_mig['D']) * chp_mig['C(LO)']
+      newRiMIX += math.ceil(task['Ri(LO)'] / chp_mig['D']) * (chp_mig['C(LO)'] + overhead_parameter.get_refined_CLO (config.PLATFORM))
+      # Add interference due to the "demanded" hp tasks clock overhead
+      # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
+      newRiMIX += (math.ceil(RiMIX / chp_mig['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
+
+    # Add interference due to the "demanded" lp tasks clock overhead (see the previous link)
+    for lp_task in chpMIG_lp:
+      newRiMIX += overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler")
+    
     if newRiMIX > task['D']:
       return None
     if newRiMIX == RiMIX:
@@ -390,7 +468,10 @@ def audsleyRiMIX (i, tasks, core_id):
   if not task['migrating']:
     chp = findCHp(task, tasks, core_id)
     chpMIG = findCHpMIG(task, tasks, core_id)
-    if riMIXStep(task, chp, chpMIG) is None:
+    chp_lp = findCHp_lp(task, tasks, core_id)
+    chpMIG_lp = findCHpMIG_lp(task, tasks, core_id)
+
+    if riMIXStep(task, chp, chpMIG, chp_lp, chpMIG_lp) is None:
       return False
   return True
 
@@ -402,8 +483,8 @@ def verify_RiMIX (core, core_id):
       return False
   return True
 
-def riLO_1Step (task, chp, core_id):
-  RiLO_1 = task['C(LO)']
+def riLO_1Step (task, chp, lp, core_id):
+  RiLO_1 = task['C(LO)'] + overhead_parameter.get_initial_overhead (config.PLATFORM)
   task_deadline = task['D']
   if (task['migrating'] and core_id in task['migration_route']):
     assert ('Ri(LO)' in task), 'Migrating task with no response time in steady mode found'
@@ -414,7 +495,15 @@ def riLO_1Step (task, chp, core_id):
       chp_jitter = 0
       if (chp_task['migrating'] and core_id in chp_task['migration_route']):
         chp_jitter = chp_task['J']
-      newRiLO_1 += math.ceil((RiLO_1 + chp_jitter) / chp_task['D']) * chp_task['C(LO)']
+      newRiLO_1 += math.ceil((RiLO_1 + chp_jitter) / chp_task['D']) * (chp_task['C(LO)']  + overhead_parameter.get_refined_CLO (config.PLATFORM))
+      # Add interference due to the "demanded" hp tasks clock overhead
+      # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
+      newRiLO_1 += (math.ceil(RiLO_1 / chp_task['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
+
+    # Add interference due to the "demanded" lp tasks clock overhead (see the previous link)
+    for lp_task in lp:
+      newRiLO_1 += overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler")
+
     if newRiLO_1 > task_deadline:
       return None
     if newRiLO_1 == RiLO_1:
@@ -429,12 +518,13 @@ def riLO_1Step (task, chp, core_id):
 def audsleyRiLO_1 (i, tasks, core_id):
   task = tasks[i]
   chp = findHp(i, tasks, core_id)
-  if riLO_1Step(task, chp, core_id) is None:
+  lp = findLp(i, tasks, core_id)
+  if riLO_1Step(task, chp, lp, core_id) is None:
     return False
   return True
 
-def riHI_1Step (task, chpHI, chpLO, core_id):
-  RiHI_1 = task['C(HI)']
+def riHI_1Step (task, chpHI, chpLO, chpHI_lp, chpLO_lp, core_id):
+  RiHI_1 = task['C(HI)'] + overhead_parameter.get_initial_overhead (config.PLATFORM)
   task_deadline = task['D']
   if (task['migrating'] and core_id == task['migration_route'][0]):
     task_deadline = task['D1']
@@ -450,14 +540,30 @@ def riHI_1Step (task, chpHI, chpLO, core_id):
   while True:
     newRiHI_1 = task['C(HI)']
     for chp_task in chpHI:
-      newRiHI_1 += math.ceil(RiHI_1 / chp_task['D']) * chp_task['C(HI)']
+      newRiHI_1 += math.ceil(RiHI_1 / chp_task['D']) * (chp_task['C(HI)'] + overhead_parameter.get_refined_CHI (config.PLATFORM))
+      # Add interference due to the "demanded" hp tasks clock overhead
+      # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
+      newRiHI_1 += (math.ceil(RiHI_1 / chp_task['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
+    
+    # Add interference due to the "demanded" lp tasks clock overhead (see the previous link)
+    for lp_task in chpHI_lp:
+      newRiHI_1 += overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler")
+
     for chp_task in chpLO:
       chp_jitter = 0
       # if (chp_task['migrating'] and core_id == chp_task['migration_route'][0]):
       #  chp_jitter = chp_task['J']
       # elif (chp_task['migrating'] and core_id == chp_task['migration_route'][1]):
       #  chp_jitter = chp_task['J2']
-      newRiHI_1 += math.ceil((task_RiLO + chp_jitter) / chp_task['D']) * chp_task['C(LO)']
+      newRiHI_1 += math.ceil((task_RiLO + chp_jitter) / chp_task['D']) * (chp_task['C(LO)'] + overhead_parameter.get_refined_CLO (config.PLATFORM))
+      # Add interference due to the "demanded" hp tasks clock overhead
+      # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
+      newRiHI_1 += (math.ceil(task_RiLO / chp_task['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
+
+    # Add interference due to the "demanded" lp tasks clock overhead (see the previous link)
+    for lp_task in chpLO_lp:
+      newRiHI_1 += overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler")
+
     if newRiHI_1 > task_deadline:
       return None
     if newRiHI_1 == RiHI_1:
@@ -469,7 +575,9 @@ def audsleyRiHI_1 (i, tasks, core_id):
   if task['HI']:
     chpHI = findCHpHI(task, tasks, core_id)
     chpLO = findCHpLO(task, tasks, core_id)
-    if riHI_1Step(task, chpHI, chpLO, core_id) is None:
+    chpHI_lp = findCHpHI(task, tasks, core_id)
+    chpLO_lp = findCHpLO(task, tasks, core_id)
+    if riHI_1Step(task, chpHI, chpLO, chpHI_lp, chpLO_lp, core_id) is None:
       return False
   return True
 
@@ -567,7 +675,8 @@ def audsley_rta_steady (i, tasks, core_id):
   task = tasks[i]
   # Get LO-crit and HI-crit higher priority tasks
   hp = findHp(i, tasks, core_id)
-  RiLO = calcRiLO(task, hp)
+  lp = findLp(i, tasks, core_id)
+  RiLO = calcRiLO(task, hp, lp)
   if RiLO is None:
     return False
   assert (RiLO <= task['D']), 'RiLO returned response time greater than deadline'

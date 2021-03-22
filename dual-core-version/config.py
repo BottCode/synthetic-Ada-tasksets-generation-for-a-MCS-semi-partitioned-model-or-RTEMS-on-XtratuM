@@ -5,14 +5,14 @@ import multiprocessing
 PARALLEL_JOBS = 1 # multiprocessing.cpu_count()
 
 # Enable/disable models to check
-CHECK_NO_MIGRATION = True
+CHECK_NO_MIGRATION = False
 CHECK_SEMI_1_BF    = False
 CHECK_SEMI_1_FF    = False
 CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = False
+CHECK_SEMI_2_WF    = True
 
 NUMBER_OF_APPROACHES = 7
 
@@ -31,7 +31,11 @@ WORST_FIT_BP = True
 VESTAL_CLASSIC = False
 VESTAL_WITH_MONITOR = False
 # Always consider HI-crit interference from HI-crit tasks
+# Only ALWAYS_HI_CRIT is refined with RTE overhead in its RTA
+# see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
 ALWAYS_HI_CRIT = True
+
+PLATFORM = "RTE-SPM-Zynq7000"
 
 # Number of tests to run for each Utilization step
 NUMBER_OF_TESTS = 1
