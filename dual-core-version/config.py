@@ -17,7 +17,7 @@ CHECK_SEMI_2_WF    = True
 NUMBER_OF_APPROACHES = 7
 
 # Enable/disable tests to run
-RUN_FIRST_TEST = False
+RUN_FIRST_TEST = True
 RUN_SECOND_TEST = False
 RUN_THIRD_TEST = False
 RUN_FOURTH_TEST = False
@@ -55,7 +55,10 @@ PROPORTION_STEP = 0.1
 PROPORTION_LOWER_BOUND = 0.1
 PROPORTION_HIGHER_BOUND = 0.9
 
-TASKSETS_SIZE = [20, 25, 30, 35]
+TASKSETS_SIZE = [8, 10, 12, 15, 20, 25, 30, 35]
+
+TASK_MIN_REAL_UTILIZATION = 0.70
+TASK_MAX_REAL_UTILIZATION = 0.90
 
 STEPS = 0
 
@@ -139,6 +142,10 @@ SYSTEMS_SCHEDULABLE_SEMI1BF = []
 last_time_on_core_i = {'c1': [], 'c2': []}
 last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
 where_last_mod_mig = ""
+slices_duration = {
+  'c1': {'LOW': 0, 'HIGH': 0}, # milliseconds
+  'c2': {'LOW': 0, 'HIGH': 0}
+}
 
 XML_Files = {
   1: {
@@ -293,3 +300,13 @@ GLOBAL_TASKSET_ID = 0
 RUNTIME_DIR = ''
 
 RUNTIME_NO_MIG_DIR = ''
+
+# TSP schemes are described in section 2.2.3 of this document:
+# https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/8
+# Supported schemes:
+#   - 1 -> 1 core, 1 partition
+#   - 2 -> a partition for each criticality level
+TSP_SCHEMA = 2
+TSP_PLATFORM = "XtratuM"
+# integer, milliseconds
+TEMPORAL_SLICE_SIZE = 5

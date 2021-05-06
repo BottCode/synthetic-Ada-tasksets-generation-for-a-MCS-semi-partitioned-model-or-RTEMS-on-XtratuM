@@ -181,6 +181,7 @@ def audsley_rta_no_migration (i, tasks, core_id):
   if Ri is None:
     return False
   assert (Ri <= task['D']), 'No migration algorithm produced a response time greater than the deadline'
+  tasks[i]['Ri'] = Ri
   return True
 
 # Find which task, in this core, has the longest deadline
@@ -296,6 +297,98 @@ def verify_RTA_migration (cores, hi_crit_core_id, migration_core_id):
   # config.last_time_on_core_i_with_additional_migrating_task[migration_core_id] = verification_cores[migration_core_id]['tasks']
   return True
 
+def TSP_2_schema_step (partitions, slices_duration):
+  #print(partitions, "\n")
+  #print(slices_duration, "\n", "--")
+  for partition in partitions:
+    slice_duration = slices_duration[partition]
+    other_slice_duration = (slices_duration['LOW'] if partition == 'HIGH' else slices_duration['HIGH'])
+    partitions[partition]['tasks'] = sorted (partitions[partition]['tasks'], key = lambda t: t['Ri'])
+
+    for task in partitions[partition]['tasks']:
+      deactived_time = math.floor(task['Ri'] / slice_duration) * other_slice_duration
+      Ri_TSP = task['Ri'] + deactived_time + other_slice_duration
+      if Ri_TSP > task['D']:
+        return False
+  
+  return True
+
+def verify_schedulability_TSP_schema_2 ():
+  #print("Verify TSP2")
+  partitions = ['HIGH', 'LOW']
+  cores = ['c1', 'c2']
+  system = {}
+  deadlines = {cores[0]: [], cores[1]: []}
+  slices_duration = {
+    cores[0]: {partitions[0]: 0.0, partitions[1]: 0.0},
+    cores[1]: {partitions[0]: 0.0, partitions[1]: 0.0}
+  }
+
+  for core in cores:
+    system[core] = {}
+    for p in partitions:
+      system[core][p] = {'tasks': [], 'totalutil': 0.0}
+  
+  # for each core, split the taskset into the two partitions
+  for core in config.last_time_on_core_i:
+    for task in config.last_time_on_core_i[core]:
+      if task['HI']:
+        # HI-crit partition
+        system[core]['HIGH']['tasks'].append(task.copy())
+        system[core]['HIGH']['totalutil'] += task['U']
+      else:
+        # LO-crit partition
+        system[core]['LOW']['tasks'].append(task.copy())
+        system[core]['LOW']['totalutil'] += task['U']
+
+      deadlines[core].append(task['D'])
+
+  for core in system:
+    # weighted round-robin
+    LO_HI_ratio = system[core]['LOW']['totalutil'] / system[core]['HIGH']['totalutil']
+    biggest_slice = math.floor(min(deadlines[core])) #+ overhead_parameter.get_partition_context_switch (config.TSP_PLATFORM) + overhead_parameter.get_hypervisor_metric (config.TSP_PLATFORM, "Clock_Management")
+    if LO_HI_ratio > 1:
+      # LO-crit partition is the most loaded one
+      slices_duration[core]['LOW'] = biggest_slice
+      slices_duration[core]['HIGH'] = math.floor(biggest_slice / LO_HI_ratio)
+    else:
+      # HI-crit partition is the most loaded one
+      slices_duration[core]['HIGH'] = biggest_slice
+      slices_duration[core]['LOW'] = math.floor(biggest_slice * LO_HI_ratio)
+
+    analysis_done = False
+    bisection_factor = 2
+    # print ("----")
+    while True:
+      # print(slices_duration[core])
+      is_schedulable = TSP_2_schema_step (partitions=system[core], slices_duration=slices_duration[core])
+      if is_schedulable:
+        break
+      
+      for partition in slices_duration[core]:
+        slices_duration[core][partition] = math.floor(slices_duration[core][partition] / bisection_factor)
+        if slices_duration[core][partition] <= 0:
+          return False
+        
+      bisection_factor = bisection_factor * 2
+
+  for core in system:
+    for partition in system[core]:
+      config.slices_duration[core][partition] = slices_duration[core][partition]
+  return True
+
+# schemes are described in section 2.2.3 of this document:
+# https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/8
+# Avalaible schemes:
+#   - 1 -> 1 core, 1 partition
+#   - 2 -> a partition for each criticality level
+def verify_schedulability_TSP (schema):
+  # schema 1 makes "irrelevant" hierarchical scheduling
+  if schema == 1:
+    return True
+  if schema == 2:
+    return verify_schedulability_TSP_schema_2()
+
 # is_last_task: True iff task is the last one that we are checking. If this task is schedulable,
 # then so is the whole systems.
 def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
@@ -337,8 +430,11 @@ def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
         cores[next_core]['tasks'] = copy.deepcopy(backup_tasks)
         cores[next_core]['utilization'] = copy.deepcopy(backup_U)
         return False
+
       assigned = True
 
+  if is_no_migration_algo and is_last_task:
+    return verify_schedulability_TSP (config.TSP_SCHEMA)
   return assigned
 
 # Calculate Ri(LO) (cfr. Equation 7 in Xu, Burns 2019)
@@ -346,8 +442,10 @@ def calcRiLO (task, hp, lp):
   RiLO = task['C(LO)'] + overhead_parameter.get_initial_overhead (config.PLATFORM)
   while True:
     newRiLO = task['C(LO)']
+    task['Interference_LO'] = 0
     for hp_task in hp:
       newRiLO += math.ceil(RiLO / hp_task['D']) * (hp_task['C(LO)'] + overhead_parameter.get_refined_CLO (config.PLATFORM))
+      task['Interference_LO'] += math.ceil(RiLO / hp_task['D']) * hp_task['C(LO)']
       # Add interference due to the "demanded" hp tasks clock overhead
       # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
       newRiLO += (math.ceil(RiLO / hp_task['D']) * overhead_parameter.get_runtime_metric (config.PLATFORM, "clock handler"))
@@ -460,6 +558,7 @@ def riMIXStep (task, chp, chpMIG, chp_lp, chpMIG_lp):
     if newRiMIX > task['D']:
       return None
     if newRiMIX == RiMIX:
+      task['Ri(MIX)'] = RiMIX
       return RiMIX
     RiMIX = newRiMIX
 
@@ -567,6 +666,7 @@ def riHI_1Step (task, chpHI, chpLO, chpHI_lp, chpLO_lp, core_id):
     if newRiHI_1 > task_deadline:
       return None
     if newRiHI_1 == RiHI_1:
+      task['Ri(HI)_2'] = RiHI_1
       return RiHI_1
     RiHI_1 = newRiHI_1
 
@@ -827,10 +927,16 @@ def reset_all_priorities (cores):
 
 def verify_no_migration (taskset, is_no_migration_algo):
   cores = copy.deepcopy(config.CORES_NO_MIGRATION)
+  is_last_task = False
+  i = 1
+
   for task in taskset:
+    if i >= len(taskset):
+      is_last_task = True
     reset_all_priorities(cores)
-    if not verify_no_migration_task(task, cores, False, is_no_migration_algo):
+    if not verify_no_migration_task(task, cores, is_last_task, is_no_migration_algo):
       return False
+    i = i + 1
       
   scheduled_tasks = 0
   for c in cores:

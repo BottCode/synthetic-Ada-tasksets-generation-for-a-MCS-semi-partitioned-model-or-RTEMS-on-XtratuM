@@ -212,9 +212,11 @@ package body Production_Workload is
 
     procedure P0 is
     begin
-      E1(IJ) := E1(IK);
-      E1(IK) := E1(IL);
-      E1(I)  := E1(IJ);
+      if IJ in E1'Range and IK in E1'Range and IL in E1'Range and I in E1'Range then
+        E1(IJ) := E1(IK);
+        E1(IK) := E1(IL);
+        E1(I)  := E1(IJ);
+      end if;
     end P0;
 
     procedure P3(X : in Whet_Float;
