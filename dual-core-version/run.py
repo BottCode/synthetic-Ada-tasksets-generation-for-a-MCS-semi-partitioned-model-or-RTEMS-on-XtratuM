@@ -10,6 +10,8 @@ import utils
 import compare_schedulable_taskset
 import optparse
 
+import offset_based_approach_mast
+
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
   if config.CHECK_NO_MIGRATION:
@@ -131,6 +133,9 @@ def run_instance (n, p, f, U, experiment_id):
       utils.check_size_taskset_with_mig(n, 'semi2WF', experiment_id, U, f, p, taskset_id)
       # print_XML()
   
+  if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
+    offset_based_approach_mast.verify_schedulability (copy.deepcopy(taskset), experiment_id)
+
   return taskset_schedulability, taskset_utilization
 
 # First test: check percentage of schedulable tasksets with different utilizations
@@ -180,7 +185,7 @@ def run_first_test ():
 
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
-  #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
+  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
@@ -232,7 +237,7 @@ def run_second_test ():
 
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
-  #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
+  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
@@ -261,7 +266,7 @@ def run_third_test ():
   
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
-  #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
+  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
   third_test_bar.finish()
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
@@ -283,7 +288,7 @@ def run_fourth_test ():
   
   utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
-  #utils.save_taskset_as_Ada_NO_MIG(experiment_id)
+  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')

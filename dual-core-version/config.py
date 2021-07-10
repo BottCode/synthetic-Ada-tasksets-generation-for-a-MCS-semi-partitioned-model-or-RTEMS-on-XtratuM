@@ -12,7 +12,10 @@ CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = True
+CHECK_SEMI_2_WF    = False
+
+# https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13
+CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST = True
 
 NUMBER_OF_APPROACHES = 7
 
@@ -55,9 +58,9 @@ PROPORTION_STEP = 0.1
 PROPORTION_LOWER_BOUND = 0.1
 PROPORTION_HIGHER_BOUND = 0.9
 
-TASKSETS_SIZE = [8, 10, 12, 15, 20, 25, 30, 35]
+TASKSETS_SIZE = [21, 22, 23, 24]
 
-TASK_MIN_REAL_UTILIZATION = 0.70
+TASK_MIN_REAL_UTILIZATION = 0.30
 TASK_MAX_REAL_UTILIZATION = 0.90
 
 STEPS = 0
@@ -271,6 +274,16 @@ Ada_No_Mig_Paths = {
     'semi2BF': './Ada_tasksets_no_mig/experiment_4/semi2-BF/',
     'semi2WF': './Ada_tasksets_no_mig/experiment_4/semi2-WF/'
   },
+}
+
+MAST_analysis_path = {
+  1: './mast_analysis/experiment_1/',
+
+  2: './mast_analysis/experiment_2/',
+  
+  3: './mast_analysis/experiment_3/',
+
+  4: './mast_analysis/experiment_4/'
 }
 
 Ada_RTEMS_XM_Paths = {

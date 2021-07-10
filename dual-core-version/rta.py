@@ -348,16 +348,15 @@ def verify_schedulability_TSP_schema_2 ():
     LO_HI_ratio = system[core]['LOW']['totalutil'] / system[core]['HIGH']['totalutil']
     biggest_slice = math.floor(min(deadlines[core])) #+ overhead_parameter.get_partition_context_switch (config.TSP_PLATFORM) + overhead_parameter.get_hypervisor_metric (config.TSP_PLATFORM, "Clock_Management")
     if LO_HI_ratio > 1:
-      # LO-crit partition is the most loaded one
+      # LO-crit partition is the loadest one
       slices_duration[core]['LOW'] = biggest_slice
       slices_duration[core]['HIGH'] = math.floor(biggest_slice / LO_HI_ratio)
     else:
-      # HI-crit partition is the most loaded one
+      # HI-crit partition is the loadest one
       slices_duration[core]['HIGH'] = biggest_slice
       slices_duration[core]['LOW'] = math.floor(biggest_slice * LO_HI_ratio)
 
-    analysis_done = False
-    bisection_factor = 2
+    factor = 2
     # print ("----")
     while True:
       # print(slices_duration[core])
@@ -366,11 +365,9 @@ def verify_schedulability_TSP_schema_2 ():
         break
       
       for partition in slices_duration[core]:
-        slices_duration[core][partition] = math.floor(slices_duration[core][partition] / bisection_factor)
+        slices_duration[core][partition] = math.floor(slices_duration[core][partition] / factor)
         if slices_duration[core][partition] <= 0:
           return False
-        
-      bisection_factor = bisection_factor * 2
 
   for core in system:
     for partition in system[core]:
@@ -433,7 +430,7 @@ def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
 
       assigned = True
 
-  if is_no_migration_algo and is_last_task:
+  if is_no_migration_algo and is_last_task and assigned:
     return verify_schedulability_TSP (config.TSP_SCHEMA)
   return assigned
 

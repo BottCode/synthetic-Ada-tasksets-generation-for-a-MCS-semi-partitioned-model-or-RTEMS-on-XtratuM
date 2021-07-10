@@ -72,8 +72,8 @@ def generate_taskset (n, p, f, maxU, experiment_id):
 
   # The Dirichlet Rescale (DRS) algorithm
   # https://sigbed.org/2020/12/21/the-dirichlet-rescale-drs-algorithm-a-general-purpose-method-underpinning-synthetic-task-set-generation/
-  U = drs (n, maxU, [0.6 for _ in range(n)], [0.05 for _ in range(n)])
-
+  U = drs (n, maxU, [0.6 for _ in range(n)], [0.048 for _ in range(n)])
+  
   # T = log_uniform(n)
   taskset = []
   for i in range(n):
