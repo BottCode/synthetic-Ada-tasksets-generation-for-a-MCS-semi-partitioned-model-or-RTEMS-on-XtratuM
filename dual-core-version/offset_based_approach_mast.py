@@ -1,5 +1,10 @@
 import config
 import os
+import shutil
+
+##############
+# verify_schedulability
+##############
 
 def verify_schedulability (taskset, experiment_id):
     
@@ -64,8 +69,58 @@ def verify_schedulability (taskset, experiment_id):
                 current_priority = current_priority + 1
 
 
-    to_mast_file (system, experiment_id)
+    return mast_analysis (system, experiment_id)
 
+##############
+# mast_analysis
+##############
+def mast_analysis (system, experiment_id):
+
+    #####
+    # create MAST txt files and the overall system directory
+    #####
+
+    system_path = to_mast_file  (system, experiment_id)
+
+    #####
+    # analyze the overall system, i.e. check the schedulability
+    # of both partitions on both core
+    #####
+
+    return analyze_system (system_path, experiment_id)
+
+##############
+# analyze_system
+##############
+def analyze_system (system_path, experiment_id):
+
+    base_command_to_execute = "mast_analysis offset_based " + system_path
+
+    for partition_file in os.listdir(system_path):
+        partition_id = os.path.splitext(partition_file)[0]
+        # os.system ("ls " + system_path + " > " + system_path + "/result_" + partition_id + ".txt")
+        os.system (base_command_to_execute + "/" + partition_file + " > " + system_path + "/result_" + partition_id + ".txt")
+
+        with open (system_path + "/result_" + partition_id + ".txt", "r") as result_file:
+            lines = result_file.read().splitlines()
+            last_line = lines[-1]
+            if last_line == "Final analysis status: DONE":
+                continue
+            elif last_line == "Final analysis status: NOT-SCHEDULABLE":
+                shutil.rmtree(system_path)
+                return False
+            else:
+                print ("!!\n\nUnhandled MAST result: " + last_line + "\n\n!!")
+                shutil.rmtree(system_path)
+                os._exit ()
+    
+    shutil.rmtree(system_path)
+    return True
+    # os._exit(os.EX_OK)
+
+##############
+# to_mast_file
+##############
 def to_mast_file (system, experiment_id):
 
     system_dir_path = config.MAST_analysis_path[experiment_id] + "system_" + str (config.GLOBAL_TASKSET_ID)
@@ -119,6 +174,11 @@ def to_mast_file (system, experiment_id):
                 write_obj.write(MAST_text)
                 write_obj.close()
 
+    return system_dir_path
+            
+##############
+# print_system
+##############
 def print_system (system):
     for core in system:
         print ("Core", core)

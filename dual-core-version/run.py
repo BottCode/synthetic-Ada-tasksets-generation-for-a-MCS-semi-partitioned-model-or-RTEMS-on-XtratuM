@@ -28,6 +28,8 @@ def create_chart (results, x_label, y_label, filename):
     data_to_plot.append({'label': 'SEMI-2 FF', 'data': results[5]})
   if config.CHECK_SEMI_2_WF: 
     data_to_plot.append({'label': 'SEMI-2 WF', 'data': results[6]})
+  if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
+    data_to_plot.append({'label': 'MAST', 'data': results[7]})
 
   # print(data_to_plot)
   plot_data(
@@ -134,7 +136,8 @@ def run_instance (n, p, f, U, experiment_id):
       # print_XML()
   
   if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
-    offset_based_approach_mast.verify_schedulability (copy.deepcopy(taskset), experiment_id)
+    if offset_based_approach_mast.verify_schedulability (copy.deepcopy(taskset), experiment_id):
+      taskset_schedulability[7] = True
 
   return taskset_schedulability, taskset_utilization
 

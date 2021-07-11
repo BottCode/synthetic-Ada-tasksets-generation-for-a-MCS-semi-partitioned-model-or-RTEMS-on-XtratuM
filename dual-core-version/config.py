@@ -17,7 +17,7 @@ CHECK_SEMI_2_WF    = False
 # https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13
 CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST = True
 
-NUMBER_OF_APPROACHES = 7
+NUMBER_OF_APPROACHES = 8
 
 # Enable/disable tests to run
 RUN_FIRST_TEST = True
