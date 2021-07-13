@@ -136,7 +136,7 @@ def run_instance (n, p, f, U, experiment_id):
       # print_XML()
   
   if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
-    if offset_based_approach_mast.verify_schedulability (copy.deepcopy(taskset), experiment_id):
+    if offset_based_approach_mast.verify_schedulability (copy.deepcopy(taskset), experiment_id, f, p):
       taskset_schedulability[7] = True
 
   return taskset_schedulability, taskset_utilization

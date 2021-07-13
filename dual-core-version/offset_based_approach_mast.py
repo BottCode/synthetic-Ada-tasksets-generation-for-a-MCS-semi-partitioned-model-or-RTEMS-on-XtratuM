@@ -1,15 +1,21 @@
 import config
 import os
 import shutil
+import math
+
+import xml.etree.ElementTree as ET
+import xml.dom.minidom
 
 ##############
 # verify_schedulability
 ##############
 
-def verify_schedulability (taskset, experiment_id):
+def verify_schedulability (taskset, experiment_id, criticality_factor, hi_crit_proportion):
     
     high_crit_tasks   = []
     low_crit_tasks  = []
+    system_util = 0
+    system_size = 0
 
     system = {
         'c1': 
@@ -67,9 +73,77 @@ def verify_schedulability (taskset, experiment_id):
             for task in system[core][partition]:
                 task['P'][core] = current_priority
                 current_priority = current_priority + 1
+                system_util += task['U']
+                system_size += 1
 
+    system_util = format (system_util, ".3f")
 
-    return mast_analysis (system, experiment_id)
+    is_schedulable, scheduling_plan = mast_analysis (system, experiment_id)
+    
+    if is_schedulable:
+        save_as_XML (system, scheduling_plan, experiment_id, system_util, system_size, criticality_factor, hi_crit_proportion)
+    
+    return is_schedulable
+
+##############
+# compute_scheduling_plan
+##############
+def compute_scheduling_plan (system, experiment_id, system_path):
+    # Q: How the scheduling plan is generated?
+    # A: <https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13#note_594713546>
+    system_plan = {
+        'c1': {
+            'LOW': {'U': 0, 'S': 0, 'W': 0},
+            'HIGH': {'U': 0, 'S': 0, 'W': 0},
+            'slot_size': 0,
+            'IWRR_list': []
+        },
+        'c2': {
+            'LOW': {'U': 0, 'S': 0, 'W': 0},
+            'HIGH': {'U': 0, 'S': 0, 'W': 0},
+            'slot_size': 0,
+            'IWRR_list': []
+        }
+    }
+
+    for core in system:
+        # compute utilizations of both partitions on current core
+        for partition in system[core]:
+            system_plan[core][partition]['U'] = sum (task['U'] for task in system[core][partition])
+                    
+        PHI = system_plan[core]['LOW']['U'] / system_plan[core]['HIGH']['U']
+        BTS = min (min (task['D'] for task in system[core]['LOW']), min (task['D'] for task in system[core]['HIGH']))
+
+        if PHI > 1:
+            # In XtratuM, the time slice width is expressed with an integer number (milliseconds).
+            # This tasksets generator script generate periods of type float. That's why we use math.ceil. 
+            system_plan[core]['LOW']['S'] = math.ceil (BTS)
+            system_plan[core]['HIGH']['S'] = math.ceil (BTS / PHI)
+        else:
+            system_plan[core]['LOW']['S'] = math.ceil (BTS * PHI)
+            system_plan[core]['HIGH']['S'] = math.ceil (BTS)
+        
+        system_plan[core]['slot_size'] = math.gcd (system_plan[core]['HIGH']['S'], system_plan[core]['LOW']['S'])
+
+        for partition in system[core]:
+            system_plan[core][partition]['W'] = math.ceil (system_plan[core][partition]['S'] / system_plan[core]['slot_size'])
+
+    # Populate IWRR list, i.e. the effective scheduling plan.
+    # Convention: the first partition to be scheduled is the HIGH-critical one.
+    # print("\n", system_plan)
+    for core in system_plan:
+        W_LOW = system_plan[core]['LOW']['W']
+        W_HIGH = system_plan[core]['HIGH']['W']
+        while W_LOW > 0 or W_HIGH > 0:
+            if W_HIGH > 0:
+                system_plan[core]['IWRR_list'].append ('HIGH')
+                W_HIGH = W_HIGH - 1
+            if W_LOW > 0:
+                system_plan[core]['IWRR_list'].append ('LOW')
+                W_LOW = W_LOW - 1
+        assert len (system_plan[core]['IWRR_list']) == (system_plan[core]['LOW']['W'] + system_plan[core]['HIGH']['W']), "AssertionError on system_plan[core]['IWRR_list']"
+
+    return system_plan
 
 ##############
 # mast_analysis
@@ -83,11 +157,22 @@ def mast_analysis (system, experiment_id):
     system_path = to_mast_file  (system, experiment_id)
 
     #####
+    # generate partitions' scheduling plans according to the Interleaved WRR
+    # and the following strategy: <https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13#note_594713546> 
+    #####
+
+    scheduling_plan = compute_scheduling_plan (system, experiment_id, system_path)
+
+    #####
     # analyze the overall system, i.e. check the schedulability
     # of both partitions on both core
     #####
 
-    return analyze_system (system_path, experiment_id)
+    is_schedulable = analyze_system (system_path, experiment_id)
+    
+    if is_schedulable:
+        return True, scheduling_plan
+    return False, None
 
 ##############
 # analyze_system
@@ -102,21 +187,12 @@ def analyze_system (system_path, experiment_id):
         os.system (base_command_to_execute + "/" + partition_file + " > " + system_path + "/result_" + partition_id + ".txt")
 
         with open (system_path + "/result_" + partition_id + ".txt", "r") as result_file:
-            lines = result_file.read().splitlines()
-            last_line = lines[-1]
-            if last_line == "Final analysis status: DONE":
-                continue
-            elif last_line == "Final analysis status: NOT-SCHEDULABLE":
+            if "NOT-SCHEDULABLE" in result_file.read():
                 shutil.rmtree(system_path)
                 return False
-            else:
-                print ("!!\n\nUnhandled MAST result: " + last_line + "\n\n!!")
-                shutil.rmtree(system_path)
-                os._exit ()
     
     shutil.rmtree(system_path)
     return True
-    # os._exit(os.EX_OK)
 
 ##############
 # to_mast_file
@@ -166,7 +242,7 @@ def to_mast_file (system, experiment_id):
                 MAST_text += "\tEvent_Handlers\t=> (\n\t\t(Type\t=>\tActivity,\n\t\tInput_Event\t=>\tevent_task" + str (task['ID']) + ",\n\t\tOutput_Event\t=> event_out_task" + str (task['ID']) + ",\n"
                 MAST_text += "\t\tActivity_Operation\t=>\toperation_task" + str (task['ID']) + ",\n\t\tActivity_Server\t=>\ttask" + str (task['ID']) + ")\n\t)\n);\n"
 
-                #print (MAST_text, "\n")
+                # print (MAST_text, "\n")
 
                 # MAST_text += ""
 
@@ -186,3 +262,102 @@ def print_system (system):
             print("\tPartition", partition) 
             for task in system[core][partition]:
                 print ("\t\ttask", task)
+
+##############
+# print_scheduling_plan
+##############
+def print_scheduling_plan (scheduling_plan):
+    for core in scheduling_plan:
+        print ("\nScheduling plan on core", core)
+        print ("\tslot size:", scheduling_plan[core]['slot_size'])
+        for partition in ['LOW', 'HIGH']:
+            print("\tPartition Weight", partition, "=", scheduling_plan[core][partition]['W'])
+        
+        print ("\tScheduling plan:", scheduling_plan[core]['IWRR_list'])
+
+##############
+# save_as_XML
+##############
+def save_as_XML (system, scheduling_plan, experiment_id, system_util, system_size, criticality_factor, hi_crit_proportion):
+    # print_system (system)
+    # print_scheduling_plan (scheduling_plan)
+    system_id = "s_" + str (config.GLOBAL_TASKSET_ID)
+    approach = 'MAST_IWRR'
+    system_size = 0
+    system_util = 0
+
+    for core in system:
+        for partition in system[core]:
+            for task in system[core][partition]:
+                system_size += 1
+                system_util += task['U']
+    
+    system_util = format (system_util, '.3f')
+
+    tree = ET.parse (config.XML_Files[experiment_id][approach])
+    root = tree.getroot()
+
+    system_selector_XML = ET.SubElement(root, 'system')
+    
+    systemid_XML = ET.SubElement(system_selector_XML, 'systemid')
+    systemid_XML.text = str(system_id)
+
+    executionid_XML = ET.SubElement(system_selector_XML, 'executionid')
+    executionid_XML.text = ('E' + str(experiment_id) + '_' + approach + '_T' + str(system_id)).lower()
+
+    size_XML = ET.SubElement(system_selector_XML, 'systemsize')
+    size_XML.text = str(system_size)
+
+    util_XML = ET.SubElement(system_selector_XML, 'systemutilization')
+    util_XML.text = str(system_util)
+
+    criticality_factor_XML = ET.SubElement(system_selector_XML, 'criticalityfactor')
+    criticality_factor_XML.text = str(criticality_factor)
+
+    # proportion of HI-crit tasks
+    perc_XML = ET.SubElement(system_selector_XML, 'perc')
+    perc_XML.text = str(hi_crit_proportion)
+
+    print("\n", scheduling_plan, "\n")
+    print("\n", system, "\n\n")
+
+    for core in system:
+        current_core_XML = ET.SubElement (system_selector_XML, 'core', {'id': core})
+        scheduling_plan_XML = ET.SubElement (current_core_XML, 'plan', {'majorFrame': str (scheduling_plan[core]['slot_size'])})
+        
+        for partition in system[core]:
+            current_partition_XML = ET.SubElement (current_core_XML, 'partition', {'level': partition})
+            
+            weight_XML = ET.SubElement (current_partition_XML, 'weight')
+            weight_XML.text = str (scheduling_plan[core][partition]['W'])
+            
+            partition_util_XML = ET.SubElement (current_partition_XML, 'partitionutil')
+            partition_util_XML.text = str (scheduling_plan[core][partition]['U'])
+
+            partition_tasks_XML = ET.SubElement (current_partition_XML, 'tasks')
+
+            for task in system[core][partition]:
+                task_XML = ET.SubElement (partition_tasks_XML, 'task')
+
+                ID_XML = ET.SubElement(task_XML, 'ID')
+                ID_XML.text = str(task['ID'])
+
+                execution_time_XML = ET.SubElement(task_XML, 'executiontime')
+                execution_time_XML.text = str (task['C(LO)'] if partition == 'LOW' else task['C(HI)'])
+
+                nominalutil_XML = ET.SubElement(task_XML, 'nominalutil')
+                nominalutil_XML.text = str(task['U'])
+
+                deadline_XML = ET.SubElement(task_XML, 'deadline')
+                deadline_XML.text = str(task['D'])
+
+                priority_XML = ET.SubElement(task_XML, 'priority')
+                priority_XML.text = str((task['P'][core]))
+
+                # Deadline equal to period
+                period_XML = ET.SubElement(task_XML, 'period')
+                period_XML.text = str(task['D'])
+
+                workload_XML = ET.SubElement(task_XML, 'workload')        
+
+    tree.write(config.XML_Files[experiment_id][approach])

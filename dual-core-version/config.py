@@ -152,6 +152,7 @@ slices_duration = {
 
 XML_Files = {
   1: {
+    'MAST_IWRR': './XML_tasksets/experiment_1/iwrrmast.xml',
     'nomigration': './XML_tasksets/experiment_1/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_1/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_1/semi1-BF.xml',
@@ -162,6 +163,7 @@ XML_Files = {
   },
 
   2: {
+    'MAST_IWRR': './XML_tasksets/experiment_2/iwrrmast.xml',
     'nomigration': './XML_tasksets/experiment_2/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_2/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_2/semi1-BF.xml',
@@ -172,6 +174,7 @@ XML_Files = {
   },
   
   3: {
+    'MAST_IWRR': './XML_tasksets/experiment_3/iwrrmast.xml',
     'nomigration': './XML_tasksets/experiment_3/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_3/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_3/semi1-BF.xml',
@@ -182,6 +185,7 @@ XML_Files = {
   },
 
   4: {
+    'MAST_IWRR': './XML_tasksets/experiment_4/iwrrmast.xml',
     'nomigration': './XML_tasksets/experiment_4/nomigration.xml',
     'semi1FF': './XML_tasksets/experiment_4/semi1-FF.xml',
     'semi1BF': './XML_tasksets/experiment_4/semi1-BF.xml',
@@ -194,6 +198,7 @@ XML_Files = {
 
 Ada_Paths = {
   1: {
+    'MAST_IWRR': './Ada_tasksets/experiment_1/iwrrmast/',
     'nomigration': './Ada_tasksets/experiment_1/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_1/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_1/semi1-BF/',
@@ -204,6 +209,7 @@ Ada_Paths = {
   },
 
   2: {
+    'MAST_IWRR': './Ada_tasksets/experiment_2/iwrrmast/',
     'nomigration': './Ada_tasksets/experiment_2/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_2/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_2/semi1-BF/',
@@ -214,6 +220,7 @@ Ada_Paths = {
   },
   
   3: {
+    'MAST_IWRR': './Ada_tasksets/experiment_3/iwrrmast/',
     'nomigration': './Ada_tasksets/experiment_3/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_3/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_3/semi1-BF/',
@@ -224,6 +231,7 @@ Ada_Paths = {
   },
 
   4: {
+    'MAST_IWRR': './Ada_tasksets/experiment_4/iwrrmast/',
     'nomigration': './Ada_tasksets/experiment_4/nomigration/',
     'semi1FF': './Ada_tasksets/experiment_4/semi1-FF/',
     'semi1BF': './Ada_tasksets/experiment_4/semi1-BF/',
@@ -288,18 +296,22 @@ MAST_analysis_path = {
 
 Ada_RTEMS_XM_Paths = {
   1: {
+    'MAST_IWRR': '../../TSP/Ada_tasksets/experiment_1/iwrrmast/',
     'nomigration': '../../TSP/Ada_tasksets/experiment_1/nomigration/'
   },
 
   2: {
+    'MAST_IWRR': '../../TSP/Ada_tasksets/experiment_2/iwrrmast/',
     'nomigration': '../../TSP/Ada_tasksets/experiment_2/nomigration/'
   },
   
   3: {
+    'MAST_IWRR': '../../TSP/Ada_tasksets/experiment_3/iwrrmast/',
     'nomigration': '../../TSP/Ada_tasksets/experiment_3/nomigration/'
   },
 
   4: {
+    'MAST_IWRR': '../../TSP/Ada_tasksets/experiment_4/iwrrmast/',
     'nomigration': '../../TSP/Ada_tasksets/experiment_4/nomigration/'
   },
 }
