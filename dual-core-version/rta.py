@@ -314,7 +314,7 @@ def TSP_2_schema_step (partitions, slices_duration):
   return True
 
 def verify_schedulability_TSP_schema_2 ():
-  #print("Verify TSP2")
+  # print("Verify TSP2")
   partitions = ['HIGH', 'LOW']
   cores = ['c1', 'c2']
   system = {}
@@ -328,7 +328,7 @@ def verify_schedulability_TSP_schema_2 ():
     system[core] = {}
     for p in partitions:
       system[core][p] = {'tasks': [], 'totalutil': 0.0}
-  
+
   # for each core, split the taskset into the two partitions
   for core in config.last_time_on_core_i:
     for task in config.last_time_on_core_i[core]:
@@ -384,7 +384,7 @@ def verify_schedulability_TSP (schema):
   if schema == 1:
     return True
   if schema == 2:
-    return verify_schedulability_TSP_schema_2()
+    return verify_schedulability_TSP_schema_2 ()
 
 # is_last_task: True iff task is the last one that we are checking. If this task is schedulable,
 # then so is the whole systems.

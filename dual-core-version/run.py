@@ -11,6 +11,7 @@ import compare_schedulable_taskset
 import optparse
 
 import offset_based_approach_mast
+import RTA_partitioned_scheduling_IWRR
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
@@ -30,6 +31,8 @@ def create_chart (results, x_label, y_label, filename):
     data_to_plot.append({'label': 'SEMI-2 WF', 'data': results[6]})
   if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
     data_to_plot.append({'label': 'MAST', 'data': results[7]})
+  if config.CHECK_PARTITIONED_SCHEDULING_IWRR:
+    data_to_plot.append({'label': 'PS-IWRR', 'data': results[8]})
 
   # print(data_to_plot)
   plot_data(
@@ -139,6 +142,10 @@ def run_instance (n, p, f, U, experiment_id):
     if offset_based_approach_mast.verify_schedulability (copy.deepcopy(taskset), experiment_id, f, p):
       taskset_schedulability[7] = True
 
+  if config.CHECK_PARTITIONED_SCHEDULING_IWRR:
+    if RTA_partitioned_scheduling_IWRR.verify_schedulability (copy.deepcopy(taskset), experiment_id, f, p):
+      taskset_schedulability[8] = True
+
   return taskset_schedulability, taskset_utilization
 
 # First test: check percentage of schedulable tasksets with different utilizations
@@ -186,10 +193,11 @@ def run_first_test ():
     config.STEPS += 1
     first_test_bar.next()
 
-  utils.beautify_XML_Files(experiment_id)
-  utils.save_taskset_as_Ada(experiment_id)
+  # utils.beautify_XML_Files(experiment_id)
+  # utils.save_taskset_as_Ada(experiment_id)
   # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
+  # utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
+  # offset_based_approach_mast.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
 
@@ -238,10 +246,10 @@ def run_second_test ():
     f += f_step
     second_test_bar.next()
 
-  utils.beautify_XML_Files(experiment_id)
   utils.save_taskset_as_Ada(experiment_id)
   # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
+  utils.beautify_XML_Files(experiment_id)
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
 

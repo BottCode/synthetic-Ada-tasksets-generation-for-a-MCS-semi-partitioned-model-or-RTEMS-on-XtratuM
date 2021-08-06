@@ -4,14 +4,21 @@ import shutil
 import math
 import utils
 import random
+import itertools
 
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
+fake_system = {'c1': {'HIGH': [
+    {'ID': 7, 'HI': True, 'C(HI)': 18, 'C(LO)': 10.046999159126875, 'U': 0.14175660189244269, 'D': 42, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 1, 'c2': -1}, 'Ri': 18}, 
+    {'ID': 5, 'HI': True, 'C(HI)': 15, 'C(LO)': 8.767037350015986, 'U': 0.15585844177806196, 'D': 36, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 2, 'c2': -1}, 'Ri': 15}, 
+    {'ID': 4, 'HI': True, 'C(HI)': 9, 'C(LO)': 9.905537284965671, 'U': 0.19566493402401325, 'D': 30, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 3, 'c2': -1}, 'Ri' : 9}], 'LOW': [{'ID': 3, 'HI': False, 'C(HI)': 58.67644787211147, 'C(LO)': 29.338223936055734, 'U': 0.3104573961487379, 'D': 94.5, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 1, 'c2': -1}, 'Ri': 37.72582202647289}, {'ID': 2, 'HI': False, 'C(HI)': 16.77519618083431, 'C(LO)': 8.387598090417155, 'U': 0.11183464120556208, 'D': 75.0, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 2, 'c2': -1}, 'Ri': 8.387598090417155}]}}
+
+fake_scheduling_plan = {'c1': {'LOW': {'U': 0.3554248798402419, 'S': 16, 'W': 8}, 'HIGH': {'U': 0.5689675603354601, 'S': 26, 'W': 13}, 'slot_size': 6, 'IWRR_list': ['HIGH', 'LOW', 'HIGH', 'LOW', 'HIGH', 'LOW', 'LOW', 'LOW']}}
+
 ##############
 # verify_schedulability
 ##############
-
 def verify_schedulability (taskset, experiment_id, criticality_factor, hi_crit_proportion):
     
     high_crit_tasks   = []
@@ -80,7 +87,7 @@ def verify_schedulability (taskset, experiment_id, criticality_factor, hi_crit_p
 
     system_util = format (system_util, ".3f")
 
-    is_schedulable, scheduling_plan = mast_analysis (system, experiment_id)
+    is_schedulable, scheduling_plan = RTA_partitioned_scheduling (system, experiment_id)
     
     if is_schedulable:
         save_as_XML (system, scheduling_plan, experiment_id, system_util, system_size, criticality_factor, hi_crit_proportion)
@@ -90,7 +97,7 @@ def verify_schedulability (taskset, experiment_id, criticality_factor, hi_crit_p
 ##############
 # compute_scheduling_plan
 ##############
-def compute_scheduling_plan (system, experiment_id, system_path):
+def compute_scheduling_plan (system):
     # Q: How the scheduling plan is generated?
     # A: <https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13#note_594713546>
     system_plan = {
@@ -132,70 +139,132 @@ def compute_scheduling_plan (system, experiment_id, system_path):
             system_plan[core][partition]['W'] = math.ceil (system_plan[core][partition]['S'] / system_plan[core]['slot_size'])
 
     # Populate IWRR list, i.e. the effective scheduling plan.
-    # Convention: the first partition to be scheduled is the HIGH-critical one.
+    # Convention: the first partition to be scheduled is the lightest one.
     # print("\n", system_plan)
     for core in system_plan:
         W_LOW = system_plan[core]['LOW']['W']
         W_HIGH = system_plan[core]['HIGH']['W']
+        next_partition_to_allocate = 'HIGH' if W_HIGH <= W_LOW else 'LOW'
         while W_LOW > 0 or W_HIGH > 0:
-            if W_HIGH > 0:
-                system_plan[core]['IWRR_list'].append ('HIGH')
-                W_HIGH = W_HIGH - 1
-            if W_LOW > 0:
-                system_plan[core]['IWRR_list'].append ('LOW')
-                W_LOW = W_LOW - 1
+            if next_partition_to_allocate == 'HIGH':
+                if W_HIGH > 0:
+                    system_plan[core]['IWRR_list'].append ('HIGH')
+                    W_HIGH = W_HIGH - 1
+                next_partition_to_allocate = 'LOW'
+            else:
+                if W_LOW > 0:
+                    system_plan[core]['IWRR_list'].append ('LOW')
+                    W_LOW = W_LOW - 1
+                next_partition_to_allocate = 'HIGH'
         assert len (system_plan[core]['IWRR_list']) == (system_plan[core]['LOW']['W'] + system_plan[core]['HIGH']['W']), "AssertionError on system_plan[core]['IWRR_list']"
 
     return system_plan
 
 ##############
-# mast_analysis
+# RTA_partitioned_scheduling
 ##############
-def mast_analysis (system, experiment_id):
+def RTA_partitioned_scheduling (system, experiment_id):
 
     #####
     # create MAST txt files and the overall system directory
     #####
 
-    system_path = to_mast_file  (system, experiment_id)
+    # system_path = to_mast_file  (system, experiment_id)
 
     #####
     # generate partitions' scheduling plans according to the Interleaved WRR
     # and the following strategy: <https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13#note_594713546> 
     #####
-
-    scheduling_plan = compute_scheduling_plan (system, experiment_id, system_path)
+    # print_system (system)
+    scheduling_plan = compute_scheduling_plan (system)
 
     #####
     # analyze the overall system, i.e. check the schedulability
     # of both partitions on both core
     #####
-
-    is_schedulable = analyze_system (system_path, experiment_id)
+    # system = fake_system
+    # scheduling_plan = fake_scheduling_plan
+    is_schedulable = analyze_system (system, scheduling_plan)
     
+    '''print("##########")
+    print (system)
+    print ("\n")
+    print (scheduling_plan)
+    print("##########")'''
     if is_schedulable:
+        # print ("\nYES!!\n\n")
         return True, scheduling_plan
+    # print ("\nNO!!\n\n")
     return False, None
 
 ##############
 # analyze_system
 ##############
-def analyze_system (system_path, experiment_id):
+def analyze_system (system, scheduling_plan):
+    # for each partition, verify if its inner tasks are schedulable according to RTA for Fixed Priority scheduling.
+    are_partitions_schedulable = check_inner_partition_schedulability (system)
+    # print ("RTA: ", are_partitions_schedulable)
+    # if so, the check the partion scheduling
+    if are_partitions_schedulable:
+        return check_intra_partition_scheduling (system, scheduling_plan)
+    else:
+        return False
 
-    base_command_to_execute = "mast_analysis offset_based " + system_path
-
-    for partition_file in os.listdir(system_path):
-        partition_id = os.path.splitext(partition_file)[0]
-        # os.system ("ls " + system_path + " > " + system_path + "/result_" + partition_id + ".txt")
-        os.system (base_command_to_execute + "/" + partition_file + " > " + system_path + "/result_" + partition_id + ".txt")
-
-        with open (system_path + "/result_" + partition_id + ".txt", "r") as result_file:
-            if "NOT-SCHEDULABLE" in result_file.read():
-                shutil.rmtree(system_path)
-                return False
-    
-    shutil.rmtree(system_path)
+def check_intra_partition_scheduling (system, scheduling_plan):
+    for core in system:
+        most_loaded_partition = 'HIGH' if scheduling_plan[core]['HIGH']['W'] > scheduling_plan[core]['LOW']['W'] else 'LOW'
+        for partition in system[core]:
+            scheduling_plan_starting_from_critical_instant = scheduling_plan[core]['IWRR_list'] if partition == most_loaded_partition else list (reversed (scheduling_plan[core]['IWRR_list']))
+            for task in system[core][partition]:
+                time_passed = 0
+                response_time = task['Ri']
+                for minor_frame in itertools.cycle (scheduling_plan_starting_from_critical_instant):
+                    diff = 0
+                    if minor_frame == partition:
+                        if response_time >= scheduling_plan[core]['slot_size']:
+                            response_time -= scheduling_plan[core]['slot_size']
+                        else:
+                            diff = scheduling_plan[core]['slot_size'] - response_time
+                            response_time = 0
+                    time_passed += scheduling_plan[core]['slot_size'] if diff == 0 else diff
+                    task['PS_Ri'] = time_passed
+                    if time_passed > task['D']:
+                        # print ("\nOUCH!!", time_passed, task)
+                        # print ("PS:", False)
+                        return False
+                    if response_time <= 0:
+                        # this task is schedulable on partitioned scheduling!
+                        break
+    # print ("PS:", True)
     return True
+
+def check_inner_partition_schedulability (system):
+    for core in system:
+        for partition in system[core]:
+            for task in system[core][partition]:
+                # select tasks with priority higher than the current one
+                higher_priority_tasks = list (filter (lambda t: t['P'][core] > task['P'][core], system[core][partition]))
+                # print_hp (task['P'][core], higher_priority_tasks)
+                # task['Ri'] = task['C(HI)'] if task['HI'] else task['C(LO)']
+                task['Ri'] = calcRi (task, higher_priority_tasks)
+                if task['Ri'] == None:
+                    return False
+                
+    return True
+
+def calcRi (task, hp):
+  start_Ri = task['C(HI)']
+  Ri = start_Ri
+  while True:
+    newRi = start_Ri
+    for hp_task in hp:
+      hp_C = hp_task['C(HI)']
+      newRi += math.ceil(Ri / hp_task['D']) * hp_C
+    if newRi > task['D']:
+      return None
+    if newRi == Ri:
+      return newRi
+    Ri = newRi
 
 ##############
 # to_mast_file

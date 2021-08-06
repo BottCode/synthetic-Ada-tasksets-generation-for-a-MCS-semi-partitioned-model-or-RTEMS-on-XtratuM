@@ -5,19 +5,20 @@ import multiprocessing
 PARALLEL_JOBS = 1 # multiprocessing.cpu_count()
 
 # Enable/disable models to check
-CHECK_NO_MIGRATION = False
+CHECK_NO_MIGRATION = True
 CHECK_SEMI_1_BF    = False
 CHECK_SEMI_1_FF    = False
 CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = False
+CHECK_SEMI_2_WF    = True
 
 # https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13
-CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST = True
+CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST = False
+CHECK_PARTITIONED_SCHEDULING_IWRR = True
 
-NUMBER_OF_APPROACHES = 8
+NUMBER_OF_APPROACHES = 9
 
 # Enable/disable tests to run
 RUN_FIRST_TEST = True

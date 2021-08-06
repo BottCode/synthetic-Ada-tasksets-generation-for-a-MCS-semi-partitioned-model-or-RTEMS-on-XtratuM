@@ -149,9 +149,9 @@ def clean_XML_and_Ada_Files(experiment_id):
     if os.path.exists(dirpath) and dirname != '.gitkeep':
       rmtree(dirpath)
     
-  for path in config.Ada_Paths[experiment_id]:
-    for dirname in os.listdir(config.Ada_Paths[experiment_id][path]):
-      dirpath = os.path.join(config.Ada_Paths[experiment_id][path], dirname)
+  for path in config.Ada_RTEMS_XM_Paths[experiment_id]:
+    for dirname in os.listdir(config.Ada_RTEMS_XM_Paths[experiment_id][path]):
+      dirpath = os.path.join(config.Ada_RTEMS_XM_Paths[experiment_id][path], dirname)
       if os.path.exists(dirpath) and dirname != '.gitkeep':
         rmtree(dirpath)
 
