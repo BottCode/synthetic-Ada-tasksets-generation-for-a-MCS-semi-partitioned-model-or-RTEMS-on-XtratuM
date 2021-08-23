@@ -29,13 +29,22 @@ overhead_values = { # in milliseconds
     },
     # XtratuM according to Table 2 in
     # https://www.researchgate.net/publication/259329902_XtratuM_An_Open_Source_Hypervisor_for_TSP_Embedded_Systems_in_Aerospace
-    'XtratuM':
+    # GR-CPCI-AT697 LEON2-FT 80MHz with 8Mb flash PROM and 4 Mb RAM, 33 MHz 32-bit PCI bus
+    'XtratuM-v2.0.5 GR-CPCI-AT697 LEON2-FT':
     {
         'Save_Context': 0.005,
         'Timer_Management': 0.009,
         'Scheduler': 0.007,
         'Load_Context': 0.005,
         'Clock_Management': 0.002
+    },
+    'XtratuM-v2.0.5 Zynq7000':
+    {
+        'overall and raw overhead': 0.002 # 2 microseconds
+    },
+    'Ada-RTE-RTEMS-XM-v2.0.5 Zynq7000':
+    {
+        'overall and raw overhead': 0.300 + 0.002 # i.e.: overhead_values['Ada-RTE-RTEMS-XM-v2.0.5 Zynq7000']['overall and raw overhead']
     }
     # Other platforms can be added...
 }

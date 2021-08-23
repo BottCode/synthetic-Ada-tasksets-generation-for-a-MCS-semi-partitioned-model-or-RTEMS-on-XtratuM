@@ -9,6 +9,7 @@ import sys
 import utils
 import compare_schedulable_taskset
 import optparse
+import matplotlib.pyplot as plt
 
 import offset_based_approach_mast
 import RTA_partitioned_scheduling_IWRR
@@ -33,6 +34,15 @@ def create_chart (results, x_label, y_label, filename):
     data_to_plot.append({'label': 'MAST', 'data': results[7]})
   if config.CHECK_PARTITIONED_SCHEDULING_IWRR:
     data_to_plot.append({'label': 'PS-IWRR', 'data': results[8]})
+    '''plt.hist (config.gcds, bins = len (set (config.gcds)))
+    plt.xticks (range (len (set (config.gcds))))
+    plt.show ()'''
+    # plt.hist (config.iwrr_list_lens, bins = len (set (config.iwrr_list_lens)))
+    # plt.xticks (range (len (set (config.iwrr_list_lens))))
+    # plt.show ()
+    
+    
+
 
   # print(data_to_plot)
   plot_data(
@@ -40,6 +50,8 @@ def create_chart (results, x_label, y_label, filename):
     x_label,
     y_label,
     config.RESULTS_DIR + filename)
+
+  
 
 def select_bin_packing_algorithm (selection):
   if selection == "FIRST_FIT_BP":
@@ -197,6 +209,7 @@ def run_first_test ():
   # utils.save_taskset_as_Ada(experiment_id)
   # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   # utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
+  RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   # offset_based_approach_mast.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')

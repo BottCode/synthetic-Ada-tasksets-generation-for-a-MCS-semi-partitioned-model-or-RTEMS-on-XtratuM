@@ -64,6 +64,12 @@ def microseconds_to_kilowhetstone_for_Ada_On_RTEMS_On_XM (microseconds):
     divider = 100000
   
   result = int( (microseconds/divider) * multiplier)
+
+  # Shrinking workload size in order to include overhead in overall nominal utilization
+  overall_execution_time = microseconds + (1000 * (overhead_parameter.overhead_values['Ada-RTE-RTEMS-XM-v2.0.5 Zynq7000']['overall and raw overhead']))
+  # print ("KW:", result)
+  result = int ((result * microseconds) / overall_execution_time)
+  # print ("Shrinked KW:", result)
   if result == 0:
     result = 1
   return result
