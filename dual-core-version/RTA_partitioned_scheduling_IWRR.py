@@ -133,6 +133,7 @@ def compute_scheduling_plan (system):
             system_plan[core]['HIGH']['S'] = math.ceil (BTS)
         
         system_plan[core]['slot_size'] = math.gcd (system_plan[core]['HIGH']['S'], system_plan[core]['LOW']['S'])
+        config.gcds.append (system_plan[core]['slot_size'])
         # print ("\n", system_plan[core]['slot_size'], "gcd of", system_plan[core]['HIGH']['S'], system_plan[core]['LOW']['S'], "\n")
 
         for partition in system[core]:
@@ -157,6 +158,11 @@ def compute_scheduling_plan (system):
                     W_LOW = W_LOW - 1
                 next_partition_to_allocate = 'HIGH'
         assert len (system_plan[core]['IWRR_list']) == (system_plan[core]['LOW']['W'] + system_plan[core]['HIGH']['W']), "AssertionError on system_plan[core]['IWRR_list']"
+        config.iwrr_list_lens.append (len (system_plan[core]['IWRR_list']))
+
+        if config.iwrr_list_max_len < len (system_plan[core]['IWRR_list']):
+            config.iwrr_list_max_len = len (system_plan[core]['IWRR_list'])
+            print ("\n New max: s_" + str (config.GLOBAL_TASKSET_ID)+ " -> " + str (len (system_plan[core]['IWRR_list'])))
 
     return system_plan
 
@@ -192,9 +198,8 @@ def RTA_partitioned_scheduling (system, experiment_id):
     print (scheduling_plan)
     print("##########")'''
     if is_schedulable:
-        # print ("\nYES!!\n\n")
         return True, scheduling_plan
-    # print ("\nNO!!\n\n")
+
     return False, None
 
 ##############
@@ -524,7 +529,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
             Mains_Files_Name[core][partition] = Main_Units[core][partition] + '.adb'
             main = 'with System;\nwith Periodic_Tasks;\n\n'
             main += 'procedure ' + Main_Units[core][partition] + ' is\n'
-            main += "\tpragma Priority (114);\n"
+            main += "\tpragma Priority (System.Priority'Last);\n"
             main += 'begin\n\tPeriodic_Tasks.Init;\nend ' + Main_Units[core][partition] + ';'
 
             # create main unit Ada file
@@ -551,7 +556,7 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
             Ada_SOP_Body[core][partition] += '\t\tFake_Status : RTEMS.STATUS_CODES;\n\t\tFake_Previous_Mode : RTEMS.MODE;\t\tDelayed_At : Ada.Real_Time.Time;\n\t\tWaked_At : Ada.Real_Time.Time;\n\t\tDeadline : Ada.Real_Time.Time;\n\t\tTime_To_Sleep : Duration := 0.0;\n\t\tNow : Ada.Real_Time.Time;\n'
             # Ada_SOP_Body[core][partition] += '\tbegin\n\t\tloop\n\t\t\tdelay until Next_Period;\n\n\t\t\tProduction_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));\n\n\t\t\tI := I + 1;\n\n\t\t\tNext_Period := Next_Period + Period_To_Add;\n\t\tend loop;\n\tend Work;\n\n'
             Ada_SOP_Body[core][partition] += '\tbegin\n\n\t\tdelay 2.0;\n\n\t\tloop\n\t\t\tDeadline := Ada.Real_Time.Clock + To_Time_Span (Period);\n\n\t\t\tProduction_Workload.Small_Whetstone (Workload_Manager.Get_Workload (ID, I));\n\n\t\t\tI := I + 1;\n\n\t\t\tNow := Ada.Real_Time.Clock;\n\n\t\t\tif Now <= Deadline then\n\n\t\t\t\tRTEMS.TASKS.MODE (RTEMS.NO_PREEMPT, 0, Fake_Previous_Mode, Fake_Status);\n\n\t\t\t\tTime_To_Sleep := To_Duration (Deadline - Ada.Real_Time.Clock);\n\t\t\t\t--  Delayed_At := Ada.Real_Time.Clock;\n\t\t\t\tdelay Time_To_Sleep;\n\t\t\t\t--  Waked_At := Ada.Real_Time.Clock;\n\n\t\t\t\tRTEMS.TASKS.MODE (RTEMS.PREEMPT, 0, Fake_Previous_Mode, Fake_Status);\n\t\t\t\t--  Ada.Text_IO.Put_Line ("Error Task " & Natural\'Image (ID) & ": " & Duration\'Image (Abs (Time_To_Sleep - (To_Duration (Waked_At - Delayed_At))) * 1_000) & " milliseconds");\n'
-            Ada_SOP_Body[core][partition] += '\n\t\t\telse\n\t\t\t\tAda.Text_IO.Put_Line ("DM Task " & Natural\'Image (ID));\n\t\t\tend if;\n\t\tend loop;\n\tend Work;\n\n'
+            Ada_SOP_Body[core][partition] += '\n\t\t\telse\n\t\t\t\t-- Ada.Text_IO.Put_Line ("DM Task " & Natural\'Image (ID));\n\t\t\t\tIs_Valid := False;\n\t\t\tend if;\n\t\tend loop;\n\tend Work;\n\n'
 
             tasks_on_current_partition_XML = current_partition_XML.find('tasks')
             for task in tasks_on_current_partition_XML.findall('task'):
@@ -571,7 +576,8 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
 
             Ada_Units[core][partition] += '\n\t\tID_T_LAST : RTEMS.ID;\n\t\tSTATUS_T_LAST : RTEMS.STATUS_CODES;\n\tbegin\n\n'
             Ada_SOP_Specs[core][partition] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT);\n'
-            Ada_SOP_Specs[core][partition] += '\tpragma Convention (C, LAST);\n\nend Set_Of_Procedures;'
+            Ada_SOP_Specs[core][partition] += '\tpragma Convention (C, LAST);\n\n'
+            Ada_SOP_Specs[core][partition] += '\t-- True iff no deadlines are missed.\n\tIs_Valid : Boolean := True;\n\nend Set_Of_Procedures;\n\n'
             # Ada_SOP_Body[core][partition] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n\t\tNext_Period : Ada.Real_Time.Time := Ada.Real_Time.Time_First + Ada.Real_Time.Nanoseconds (1_000_000_000);\n'
             Ada_SOP_Body[core][partition] += '\tprocedure LAST (ARGUMENT : in RTEMS.TASKS.ARGUMENT) is\n\t\tpragma Unreferenced (ARGUMENT);\n'
             Ada_SOP_Body[core][partition] += '\tbegin\n\t\tdelay ' + str ((max(hyperperiods['c1']['LOW'], hyperperiods['c1']['HIGH'], hyperperiods['c2']['LOW'], hyperperiods['c2']['HIGH']) / 1000000) + 2.0) + ';\n\t\tloop\n\t\t\tnull;\n\t\t\tAda.Text_IO.Put_Line ("end?");\n\t\tend loop;\n\tend LAST;\n\nend Set_Of_Procedures;'
@@ -598,11 +604,12 @@ def save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id):
             Ada_Units[core][partition] += '\t\tdelay To_Duration (Ada.Real_Time.Microseconds (Get_Longest_Hyperperiod));\n\n'
             Ada_Units[core][partition] += '\t\t--  RTEMS.CPU_Usage.RESET;\n\n'
             Ada_Units[core][partition] += '\n\t\tAda.Text_IO.Put_Line ("");\n\n'
-            Ada_Units[core][partition] += '\t\tif Single_Execution_Data.Partition_Id = "C1LOW" then\n\t\t\tAda.Text_IO.Put_Line ("New Execution");\n\t\t\tAda.Text_IO.Put_Line (Single_Execution_Data.System_Id);\n\t\t\tAda.Text_IO.Put_Line ("Partition_Size: " & Single_Execution_Data.Partition_Size);\n\t\t\tAda.Text_IO.Put_Line ("Criticality Factor: " & Single_Execution_Data.Criticality_Factor);\n\t\t\tAda.Text_IO.Put_Line ("HI_Crit_Proportion: " & Single_Execution_Data.HI_Crit_Proportion);\n\t\t\tAda.Text_IO.Put_Line ("Partition_Utilization: " & Single_Execution_Data.Partition_Utilization);\n\t\tend if;\n'
+            Ada_Units[core][partition] += '\t\tif Single_Execution_Data.Partition_Id = "C1LOW" then\n\t\t\tAda.Text_IO.Put_Line ("New Execution");\n\t\t\tAda.Text_IO.Put_Line (Single_Execution_Data.System_Id);\n\t\tend if;\n'
             Ada_Units[core][partition] += '\t\tif Single_Execution_Data.Partition_Id = "C1HIGH" then\n\t\t\tdelay 2.0;\n\t\tend if;\n'
             Ada_Units[core][partition] += '\t\tif Single_Execution_Data.Partition_Id = "C2LOW" then\n\t\t\tdelay 4.0;\n\t\tend if;\n'
             Ada_Units[core][partition] += '\t\tif Single_Execution_Data.Partition_Id = "C2HIGH" then\n\t\t\tdelay 6.0;\n\t\tend if;\n'
             Ada_Units[core][partition] += '\n\t\tAda.Text_IO.Put_Line (Single_Execution_Data.Partition_Id);\n'
+            Ada_Units[core][partition] += '\n\t\tAda.Text_IO.Put_Line ("Partition_Size: " & Single_Execution_Data.Partition_Size);\n\t\tAda.Text_IO.Put_Line ("Criticality Factor: " & Single_Execution_Data.Criticality_Factor);\n\t\tAda.Text_IO.Put_Line ("HI_Crit_Proportion: " & Single_Execution_Data.HI_Crit_Proportion);\n\t\tAda.Text_IO.Put_Line ("Partition_Utilization: " & Single_Execution_Data.Partition_Utilization);\n\t\tAda.Text_IO.Put_Line ("Is Valid: " & Boolean\'Image (Set_Of_Procedures.Is_Valid));'
             Ada_Units[core][partition] += '\n\t\tAda.Text_IO.Put_Line ("");\n\n\t\t--  rtems_cpu_usage_report\n\t\tRTEMS.CPU_Usage.Report;\n\n\t\tloop\n\t\t\tnull;\n\t\tend loop;\n\tend Init;\nend Periodic_Tasks;'
         
             f = open(Apps_Dir[core][partition] + 'periodic_tasks.adb', 'w')
