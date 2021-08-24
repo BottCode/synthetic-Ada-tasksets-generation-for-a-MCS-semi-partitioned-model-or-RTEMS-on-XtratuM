@@ -16,24 +16,24 @@ import RTA_partitioned_scheduling_IWRR
 
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
-  if config.CHECK_NO_MIGRATION:
-    data_to_plot.append({'label': 'No Migration', 'data': results[0]})
-  if config.CHECK_SEMI_1_BF:
-    data_to_plot.append({'label': 'SEMI-1 BF', 'data': results[1]})
-  if config.CHECK_SEMI_1_FF:
-    data_to_plot.append({'label': 'SEMI-1 FF', 'data': results[2]})
-  if config.CHECK_SEMI_1_WF:
-    data_to_plot.append({'label': 'SEMI-1 WF', 'data': results[3]})
-  if config.CHECK_SEMI_2_BF:
-    data_to_plot.append({'label': 'SEMI-2 BF', 'data': results[4]})
-  if config.CHECK_SEMI_2_FF:
-    data_to_plot.append({'label': 'SEMI-2 FF', 'data': results[5]})
-  if config.CHECK_SEMI_2_WF: 
-    data_to_plot.append({'label': 'SEMI-2 WF', 'data': results[6]})
-  if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
-    data_to_plot.append({'label': 'MAST', 'data': results[7]})
   if config.CHECK_PARTITIONED_SCHEDULING_IWRR:
-    data_to_plot.append({'label': 'PS-IWRR', 'data': results[8]})
+    data_to_plot.append({'label': 'PS-IWRR', 'data': results[0]})
+  if config.CHECK_NO_MIGRATION:
+    data_to_plot.append({'label': 'No Migration', 'data': results[1]})
+  if config.CHECK_SEMI_1_BF:
+    data_to_plot.append({'label': 'SEMI-1 BF', 'data': results[2]})
+  if config.CHECK_SEMI_1_FF:
+    data_to_plot.append({'label': 'SEMI-1 FF', 'data': results[3]})
+  if config.CHECK_SEMI_1_WF:
+    data_to_plot.append({'label': 'SEMI-1 WF', 'data': results[4]})
+  if config.CHECK_SEMI_2_BF:
+    data_to_plot.append({'label': 'SEMI-2 BF', 'data': results[5]})
+  if config.CHECK_SEMI_2_FF:
+    data_to_plot.append({'label': 'SEMI-2 FF', 'data': results[6]})
+  if config.CHECK_SEMI_2_WF: 
+    data_to_plot.append({'label': 'SEMI-2 WF', 'data': results[7]})
+  if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
+    data_to_plot.append({'label': 'MAST', 'data': results[8]})
     '''plt.hist (config.gcds, bins = len (set (config.gcds)))
     plt.xticks (range (len (set (config.gcds))))
     plt.show ()'''
@@ -84,13 +84,17 @@ def run_instance (n, p, f, U, experiment_id):
   config.last_time_on_core_i = {'c1': [], 'c2': []}
   config.last_time_on_core_i_with_additional_migrating_task = {'c1': [], 'c2': []}
 
+  if config.CHECK_PARTITIONED_SCHEDULING_IWRR:
+    if RTA_partitioned_scheduling_IWRR.verify_schedulability (copy.deepcopy(taskset), experiment_id, f, p):
+      taskset_schedulability[0] = True
+
   if config.CHECK_NO_MIGRATION:
     select_bin_packing_algorithm("WORST_FIT_BP")
     if verify_no_migration(copy.deepcopy(taskset), True):
       # print("Schedulable without migration")
       utils.check_size_taskset_with_mig(n, 'nomigration', experiment_id, U, f, p, taskset_id)
       # print_XML()
-      taskset_schedulability[0] = True
+      taskset_schedulability[1] = True
 
   fetched_approach = True
   if config.CHECK_SEMI_1_BF:
@@ -102,13 +106,13 @@ def run_instance (n, p, f, U, experiment_id):
       # print_XML()
       # # print(T)
       # # print("---")
-      taskset_schedulability[1] = True
+      taskset_schedulability[2] = True
   
   if config.CHECK_SEMI_1_FF:
     select_bin_packing_algorithm("FIRST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
-      taskset_schedulability[2] = True
+      taskset_schedulability[3] = True
       # print("Schedulable with semi1FF")
       utils.check_size_taskset_with_mig(n, 'semi1FF', experiment_id, U, f, p, taskset_id)
       # print_XML()
@@ -117,7 +121,7 @@ def run_instance (n, p, f, U, experiment_id):
     select_bin_packing_algorithm("WORST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
-      taskset_schedulability[3] = True
+      taskset_schedulability[4] = True
       # print("Schedulable with semi1WF")
       utils.check_size_taskset_with_mig(n, 'semi1WF', experiment_id, U, f, p, taskset_id)
       # print_XML()
@@ -127,7 +131,7 @@ def run_instance (n, p, f, U, experiment_id):
     select_bin_packing_algorithm("BEST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
-      taskset_schedulability[4] = True
+      taskset_schedulability[5] = True
       # print("Schedulable with semi2BF")
       utils.check_size_taskset_with_mig(n, 'semi2BF', experiment_id, U, f, p, taskset_id)
       # print_XML()
@@ -136,7 +140,7 @@ def run_instance (n, p, f, U, experiment_id):
     select_bin_packing_algorithm("FIRST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
-      taskset_schedulability[5] = True
+      taskset_schedulability[6] = True
       # print("Schedulable with semi2FF")
       utils.check_size_taskset_with_mig(n, 'semi2FF', experiment_id, U, f, p, taskset_id)
       # print_XML()
@@ -145,17 +149,13 @@ def run_instance (n, p, f, U, experiment_id):
     select_bin_packing_algorithm("WORST_FIT_BP")
     
     if verify_model_1 (copy.deepcopy(taskset), fetched_approach):
-      taskset_schedulability[6] = True
+      taskset_schedulability[7] = True
       # print("Schedulable with semi2WF")
       utils.check_size_taskset_with_mig(n, 'semi2WF', experiment_id, U, f, p, taskset_id)
       # print_XML()
   
   if config.CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST:
     if offset_based_approach_mast.verify_schedulability (copy.deepcopy(taskset), experiment_id, f, p):
-      taskset_schedulability[7] = True
-
-  if config.CHECK_PARTITIONED_SCHEDULING_IWRR:
-    if RTA_partitioned_scheduling_IWRR.verify_schedulability (copy.deepcopy(taskset), experiment_id, f, p):
       taskset_schedulability[8] = True
 
   return taskset_schedulability, taskset_utilization
@@ -209,7 +209,7 @@ def run_first_test ():
   # utils.save_taskset_as_Ada(experiment_id)
   # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
   # utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
-  RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   # offset_based_approach_mast.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')

@@ -12,7 +12,7 @@ CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = False
+CHECK_SEMI_2_WF    = True
 
 # https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13
 CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST = False
@@ -39,7 +39,7 @@ VESTAL_WITH_MONITOR = False
 # see <https://gitlab.com/thesisBottaroMattia/ada-ravenscar-runtime-for-zynq7000-dual-core-supporting-mixed-criticality-systems/-/issues/1>
 ALWAYS_HI_CRIT = True
 
-PLATFORM = "XtratuM-v2.0.5 GR-CPCI-AT697 LEON2-FT"
+PLATFORM = "RTE-SPM-Zynq7000"
 
 # Number of tests to run for each Utilization step
 NUMBER_OF_TESTS = 1
@@ -61,7 +61,7 @@ PROPORTION_HIGHER_BOUND = 0.9
 
 TASKSETS_SIZE = [15, 20, 21, 22, 23, 24, 25]
 
-TASK_MIN_REAL_UTILIZATION = 0.30
+TASK_MIN_REAL_UTILIZATION = 0.70
 TASK_MAX_REAL_UTILIZATION = 0.90
 
 STEPS = 0
