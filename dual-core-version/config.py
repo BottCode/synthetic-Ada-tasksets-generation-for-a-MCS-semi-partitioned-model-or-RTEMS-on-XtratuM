@@ -12,7 +12,7 @@ CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = True
+CHECK_SEMI_2_WF    = False
 
 # https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13
 CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST = False
