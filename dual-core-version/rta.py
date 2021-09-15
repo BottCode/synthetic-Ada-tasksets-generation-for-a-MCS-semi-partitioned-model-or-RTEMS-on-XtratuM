@@ -430,8 +430,6 @@ def verify_no_migration_task (task, cores, is_last_task, is_no_migration_algo):
 
       assigned = True
 
-  if is_no_migration_algo and is_last_task and assigned:
-    return verify_schedulability_TSP (config.TSP_SCHEMA)
   return assigned
 
 # Calculate Ri(LO) (cfr. Equation 7 in Xu, Burns 2019)

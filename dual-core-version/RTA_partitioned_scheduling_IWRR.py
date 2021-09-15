@@ -9,13 +9,6 @@ import itertools
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
-fake_system = {'c1': {'HIGH': [
-    {'ID': 7, 'HI': True, 'C(HI)': 18, 'C(LO)': 10.046999159126875, 'U': 0.14175660189244269, 'D': 42, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 1, 'c2': -1}, 'Ri': 18}, 
-    {'ID': 5, 'HI': True, 'C(HI)': 15, 'C(LO)': 8.767037350015986, 'U': 0.15585844177806196, 'D': 36, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 2, 'c2': -1}, 'Ri': 15}, 
-    {'ID': 4, 'HI': True, 'C(HI)': 9, 'C(LO)': 9.905537284965671, 'U': 0.19566493402401325, 'D': 30, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 3, 'c2': -1}, 'Ri' : 9}], 'LOW': [{'ID': 3, 'HI': False, 'C(HI)': 58.67644787211147, 'C(LO)': 29.338223936055734, 'U': 0.3104573961487379, 'D': 94.5, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 1, 'c2': -1}, 'Ri': 37.72582202647289}, {'ID': 2, 'HI': False, 'C(HI)': 16.77519618083431, 'C(LO)': 8.387598090417155, 'U': 0.11183464120556208, 'D': 75.0, 'J': 0, 'migrating': False, 'migration_route': [], 'P': {'c1': 2, 'c2': -1}, 'Ri': 8.387598090417155}]}}
-
-fake_scheduling_plan = {'c1': {'LOW': {'U': 0.3554248798402419, 'S': 16, 'W': 8}, 'HIGH': {'U': 0.5689675603354601, 'S': 26, 'W': 13}, 'slot_size': 6, 'IWRR_list': ['HIGH', 'LOW', 'HIGH', 'LOW', 'HIGH', 'LOW', 'LOW', 'LOW']}}
-
 ##############
 # verify_schedulability
 ##############

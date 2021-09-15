@@ -3,10 +3,10 @@ result
 .pyo
 *.png
 log.txt
-./dual-core-version/Ada_tasksets/experiment_1/*
-./dual-core-version/Ada_tasksets/experiment_2/*
-./dual-core-version/Ada_tasksets/experiment_3/*
-./dual-core-version/Ada_tasksets/experiment_4/*
+./dual-core-version/Ada_tasksets/experiment_1/**
+./dual-core-version/Ada_tasksets/experiment_2/**
+./dual-core-version/Ada_tasksets/experiment_3/**
+./dual-core-version/Ada_tasksets/experiment_4/**
 
 # MAST
 *.lis

@@ -40,18 +40,17 @@ def create_chart (results, x_label, y_label, filename):
     # plt.hist (config.iwrr_list_lens, bins = len (set (config.iwrr_list_lens)))
     # plt.xticks (range (len (set (config.iwrr_list_lens))))
     # plt.show ()
-    
-    
 
+  print (filename + '\n')
+  print ("data_to_plot", data_to_plot)
+  print ("x_label", x_label)
+  print ("y_label", y_label)
 
-  # print(data_to_plot)
   plot_data(
     data_to_plot,
     x_label,
     y_label,
-    config.RESULTS_DIR + filename)
-
-  
+    config.RESULTS_DIR + filename)  
 
 def select_bin_packing_algorithm (selection):
   if selection == "FIRST_FIT_BP":
@@ -91,7 +90,6 @@ def run_instance (n, p, f, U, experiment_id):
   if config.CHECK_NO_MIGRATION:
     select_bin_packing_algorithm("WORST_FIT_BP")
     if verify_no_migration(copy.deepcopy(taskset), True):
-      # print("Schedulable without migration")
       utils.check_size_taskset_with_mig(n, 'nomigration', experiment_id, U, f, p, taskset_id)
       # print_XML()
       taskset_schedulability[1] = True
@@ -178,14 +176,6 @@ def run_first_test ():
   config.STEPS = 0
   while U <= finish_U:
     # For each utilization level
-
-    # res_local[0] is no migration
-    # res_local[1] is SEMI-1 BF 
-    # res_local[2] is SEMI-1 FF
-    # res_local[3] is SEMI-1 WF
-    # res_local[4] is SEMI-2 BF
-    # res_local[5] is SEMI-2 FF
-    # res_local[6] is SEMI-2 WF
     res_local = []
     for _ in range(config.NUMBER_OF_APPROACHES):
       res_local.append([U,0])
@@ -205,12 +195,16 @@ def run_first_test ():
     config.STEPS += 1
     first_test_bar.next()
 
-  # utils.beautify_XML_Files(experiment_id)
+  utils.beautify_XML_Files(experiment_id)
+  # Uncomment the following line if you want to generate Ada tasksets
+  # for the RTE Platform (Ravenscar)
   # utils.save_taskset_as_Ada(experiment_id)
-  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  # utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
-  RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
-  # offset_based_approach_mast.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+
+  # Uncomment the following lines if you want to generate Ada tasksets
+  # for the RTEMS/XM Platform
+  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
 
@@ -259,10 +253,16 @@ def run_second_test ():
     f += f_step
     second_test_bar.next()
 
-  utils.save_taskset_as_Ada(experiment_id)
-  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
   utils.beautify_XML_Files(experiment_id)
+  # Uncomment the following line if you want to generate Ada tasksets
+  # for the RTE Platform (Ravenscar)
+  # utils.save_taskset_as_Ada(experiment_id)
+
+  # Uncomment the following lines if you want to generate Ada tasksets
+  # for the RTEMS/XM Platform
+  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
 
@@ -289,9 +289,15 @@ def run_third_test ():
     third_test_bar.next()
   
   utils.beautify_XML_Files(experiment_id)
-  utils.save_taskset_as_Ada(experiment_id)
-  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
+  # Uncomment the following line if you want to generate Ada tasksets
+  # for the RTE Platform (Ravenscar)
+  # utils.save_taskset_as_Ada(experiment_id)
+
+  # Uncomment the following lines if you want to generate Ada tasksets
+  # for the RTEMS/XM Platform
+  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  
   third_test_bar.finish()
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
 
@@ -311,9 +317,15 @@ def run_fourth_test ():
     fourth_test_bar.next()
   
   utils.beautify_XML_Files(experiment_id)
-  utils.save_taskset_as_Ada(experiment_id)
-  # utils.save_taskset_as_Ada_NO_MIG(experiment_id)
-  utils.save_taskset_as_Ada_On_RTEMS_On_XM(schema = config.TSP_SCHEMA, experiment_id = experiment_id)
+  # Uncomment the following line if you want to generate Ada tasksets
+  # for the RTE Platform (Ravenscar)
+  # utils.save_taskset_as_Ada(experiment_id)
+
+  # Uncomment the following lines if you want to generate Ada tasksets
+  # for the RTEMS/XM Platform
+  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
 

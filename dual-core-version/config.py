@@ -12,7 +12,7 @@ CHECK_SEMI_2_FF    = False
 CHECK_SEMI_2_BF    = False
 
 CHECK_SEMI_1_WF    = False
-CHECK_SEMI_2_WF    = False
+CHECK_SEMI_2_WF    = True
 
 # https://gitlab.com/thesisBottaroMattia/mcs-vs-tsp-a-comparison/-/issues/13
 CHECK_HIERARCHICAL_SCHEDULING_OFFSET_BASED_MAST = False
@@ -59,7 +59,7 @@ PROPORTION_STEP = 0.1
 PROPORTION_LOWER_BOUND = 0.1
 PROPORTION_HIGHER_BOUND = 0.9
 
-TASKSETS_SIZE = [15, 20, 21, 22, 23, 24, 25]
+TASKSETS_SIZE = [15, 20, 21, 22, 23]
 
 TASK_MIN_REAL_UTILIZATION = 0.70
 TASK_MAX_REAL_UTILIZATION = 0.90
@@ -333,7 +333,7 @@ RUNTIME_NO_MIG_DIR = ''
 #   - 1 -> 1 core, 1 partition
 #   - 2 -> a partition for each criticality level
 TSP_SCHEMA = 2
-TSP_PLATFORM = "XtratuM"
+TSP_PLATFORM = "Ada-RTE-RTEMS-XM-v2.0.5 Zynq7000"
 # integer, milliseconds
 TEMPORAL_SLICE_SIZE = 5
 
