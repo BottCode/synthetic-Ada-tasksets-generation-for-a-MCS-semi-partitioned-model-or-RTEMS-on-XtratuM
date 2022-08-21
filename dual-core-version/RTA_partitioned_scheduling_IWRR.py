@@ -155,7 +155,7 @@ def compute_scheduling_plan (system):
 
         if config.iwrr_list_max_len < len (system_plan[core]['IWRR_list']):
             config.iwrr_list_max_len = len (system_plan[core]['IWRR_list'])
-            print ("\n New max: s_" + str (config.GLOBAL_TASKSET_ID)+ " -> " + str (len (system_plan[core]['IWRR_list'])))
+            # print ("\n New max: s_" + str (config.GLOBAL_TASKSET_ID)+ " -> " + str (len (system_plan[core]['IWRR_list'])))
 
     return system_plan
 

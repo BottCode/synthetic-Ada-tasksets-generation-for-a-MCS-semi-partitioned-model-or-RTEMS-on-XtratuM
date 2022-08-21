@@ -1,6 +1,7 @@
 import config
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
+import os
 
 import matplotlib
 matplotlib.use('tkagg')
@@ -18,7 +19,7 @@ def plot_data (results, output, x_lab):
   plt.xticks()
   plt.legend()
   plt.savefig(output)
-  print('Result saved: ' + output)
+  print('\n-------\nResults saved at:\n\t ' + os.path.dirname(os.path.abspath(output)) + "\n-------\n")
 
 def produce_results_experiment(experiment_id):
     xml_level_to_analyze = ""
@@ -72,7 +73,7 @@ def produce_results_experiment(experiment_id):
 
             results_to_plot[approach].append([float(level), perc])
 
-    output_path = config.RESULTS_DIR + 'result_taskset_sched_' + str(experiment_id) + '.png'
+    output_path = config.RESULTS_DIR + 'result_taskset_sched_exp_' + str(experiment_id) + '.png'
     plot_data(results_to_plot, output_path, x_lab)
 
 # It compares the simulations result by schedulable tasksets with at least one migrating task.

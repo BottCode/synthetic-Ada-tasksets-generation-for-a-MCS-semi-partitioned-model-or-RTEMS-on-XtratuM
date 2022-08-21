@@ -41,10 +41,10 @@ def create_chart (results, x_label, y_label, filename):
     # plt.xticks (range (len (set (config.iwrr_list_lens))))
     # plt.show ()
 
-  print (filename + '\n')
-  print ("data_to_plot", data_to_plot)
-  print ("x_label", x_label)
-  print ("y_label", y_label)
+  # print (filename + '\n')
+  # print ("data_to_plot", data_to_plot)
+  # print ("x_label", x_label)
+  # print ("y_label", y_label)
 
   plot_data(
     data_to_plot,

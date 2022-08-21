@@ -243,7 +243,7 @@ Ada_Paths = {
   },
 }
 
-Ada_No_Mig_Paths = {
+'''Ada_No_Mig_Paths = {
   1: {
     'nomigration': './Ada_tasksets_no_mig/experiment_1/nomigration/',
     'semi1FF': './Ada_tasksets_no_mig/experiment_1/semi1-FF/',
@@ -283,7 +283,7 @@ Ada_No_Mig_Paths = {
     'semi2BF': './Ada_tasksets_no_mig/experiment_4/semi2-BF/',
     'semi2WF': './Ada_tasksets_no_mig/experiment_4/semi2-WF/'
   },
-}
+}'''
 
 MAST_analysis_path = {
   1: './mast_analysis/experiment_1/',

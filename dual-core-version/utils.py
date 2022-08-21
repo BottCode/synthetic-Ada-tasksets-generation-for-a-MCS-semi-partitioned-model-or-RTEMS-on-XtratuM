@@ -144,11 +144,11 @@ def clean_XML_and_Ada_Files(experiment_id):
       if os.path.exists(dirpath) and dirname != '.gitkeep':
         rmtree(dirpath) 
 
-  for path in config.Ada_No_Mig_Paths[experiment_id]:
+  '''for path in config.Ada_No_Mig_Paths[experiment_id]:
     for dirname in os.listdir(config.Ada_No_Mig_Paths[experiment_id][path]):
       dirpath = os.path.join(config.Ada_No_Mig_Paths[experiment_id][path], dirname)
       if os.path.exists(dirpath) and dirname != '.gitkeep':
-        rmtree(dirpath)
+        rmtree(dirpath)'''
 
   for dirname in os.listdir(config.MAST_analysis_path[experiment_id]):
     dirpath = os.path.join(config.MAST_analysis_path[experiment_id], dirname)

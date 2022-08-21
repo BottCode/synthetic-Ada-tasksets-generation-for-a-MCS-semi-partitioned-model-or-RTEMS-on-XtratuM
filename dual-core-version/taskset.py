@@ -5,7 +5,6 @@ import functools
 import config
 import perale_taskset_generator
 import sys
-import stafford_fixed_numbers
 from drs import drs
 
 # Default values taken from "Techniques For The Synthesis Of Multiprocessor Tasksets" by Emberson, et. al
