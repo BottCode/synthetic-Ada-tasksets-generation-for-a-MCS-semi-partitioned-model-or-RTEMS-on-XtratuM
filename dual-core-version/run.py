@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 import offset_based_approach_mast
 import RTA_partitioned_scheduling_IWRR
 
+import configparser
+
+
 def create_chart (results, x_label, y_label, filename):
   data_to_plot = []
   if config.CHECK_PARTITIONED_SCHEDULING_IWRR:
@@ -395,13 +398,17 @@ def parse_options():
   parser.add_option('--numb-tests',
       action="store", dest="numbtests",
       help="query string", default="100")
+
+  parser.add_option('--config-path',
+      action="store", dest="configpath",
+      help="query string", default="")
       
   options, args = parser.parse_args()
   # print(options, args)
 
   config.RUNTIME_DIR = '"' + options.runtimedir + '"'
   config.RUNTIME_NO_MIG_DIR = '"' + options.runtimenomigdir + '"'
-  config.UTIL_STEP = float(options.utilstep)
+  '''config.UTIL_STEP = float(options.utilstep)
   config.UTIL_LOWER_BOUND = float(options.utillow)
   config.UTIL_HIGHER_BOUND = float(options.utilhigh)
   config.CRITICALITY_STEP = float(options.criticalitystep)
@@ -414,8 +421,33 @@ def parse_options():
   config.RUN_SECOND_TEST = True if (str(options.exp2) == 'True') else False
   config.RUN_THIRD_TEST = True if (str(options.exp3) == 'True') else False
   config.RUN_FOURTH_TEST = True if (str(options.exp4) == 'True') else False
-  config.NUMBER_OF_TESTS = int(options.numbtests)
-  #config.TASKSETS_SIZE = 
+  config.NUMBER_OF_TESTS = int(options.numbtests)'''
+
+  file_conf = configparser.ConfigParser()
+  file_conf.read(options.configpath)
+
+  config.UTIL_STEP = float(file_conf['Utilization Levels']['step'])
+  config.UTIL_LOWER_BOUND = float(file_conf['Utilization Levels']['lower_bound'])
+  config.UTIL_HIGHER_BOUND = float(file_conf['Utilization Levels']['upper_bound'])
+  
+  config.CRITICALITY_STEP = float(file_conf['Criticality Factor Levels']['step'])
+  config.CRITICALITY_LOWER_BOUND =float (file_conf['Criticality Factor Levels']['lower_bound'])
+  config.CRITICALITY_HIGHER_BOUND = float(file_conf['Criticality Factor Levels']['upper_bound'])
+  
+  config.PROPORTION_STEP = float(file_conf['HI-crit Proportion Levels']['step'])
+  config.PROPORTION_LOWER_BOUND = float(file_conf['HI-crit Proportion Levels']['lower_bound'])
+  config.PROPORTION_HIGHER_BOUND = float(file_conf['HI-crit Proportion Levels']['upper_bound'])
+
+  config.RUN_FIRST_TEST = True if  (str(file_conf['Experiments']['exp_1'].lower()) == 'yes') else False
+  config.RUN_SECOND_TEST = True if (str(file_conf['Experiments']['exp_2'].lower()) == 'yes') else False
+  config.RUN_THIRD_TEST = True if  (str(file_conf['Experiments']['exp_3'].lower()) == 'yes') else False
+  config.RUN_FOURTH_TEST = True if (str(file_conf['Experiments']['exp_4'].lower()) == 'yes') else False
+  config.NUMBER_OF_TESTS = int(file_conf['Tasksets for each UL']['n'])
+
+  config.TASKSETS_SIZE = [int(s) for s in file_conf["Tasksets Size"]["size_list"].split(',')]
+
+  config.TASK_MIN_NOMINAL_UTILIZATION = float(file_conf['Per-tasks utilization range']['lower_bound'])
+  config.TASK_MAX_NOMINAL_UTILIZATION = float(file_conf['Per-tasks utilization range']['upper_bound'])
 
 
 ######### START ###########

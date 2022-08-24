@@ -61,8 +61,15 @@ PROPORTION_HIGHER_BOUND = 0.9
 
 TASKSETS_SIZE = [15, 20, 21, 22, 23]
 
+# this is the real utilization, i.e. the percentage of nominal utilization
+# e.g. real utils of 0.70 means that the real utils is 0.70 * nominal util.
+# The following two paramenters are the range.
 TASK_MIN_REAL_UTILIZATION = 0.70
 TASK_MAX_REAL_UTILIZATION = 0.90
+
+# Per-tasks' nominal utilization range
+TASK_MIN_NOMINAL_UTILIZATION = 0.048
+TASK_MAX_NOMINAL_UTILIZATION = 0.6
 
 STEPS = 0
 
