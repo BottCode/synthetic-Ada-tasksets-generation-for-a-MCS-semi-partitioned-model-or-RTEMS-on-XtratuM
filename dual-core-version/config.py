@@ -344,6 +344,10 @@ TSP_PLATFORM = "Ada-RTE-RTEMS-XM-v2.0.5 Zynq7000"
 # integer, milliseconds
 TEMPORAL_SLICE_SIZE = 5
 
+TASKSETS_LANGUAGE = "Ada"
+GENERATE_TASKSET_RTE = "yes"
+GENERATE_TASKSET_TSP = "yes"
+
 # just for debug
 gcds = []
 iwrr_list_max_len = 0

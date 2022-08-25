@@ -199,14 +199,15 @@ def run_first_test ():
     first_test_bar.next()
 
   utils.beautify_XML_Files(experiment_id)
-  # Uncomment the following line if you want to generate Ada tasksets
-  # for the RTE Platform (Ravenscar)
-  # utils.save_taskset_as_Ada(experiment_id)
 
-  # Uncomment the following lines if you want to generate Ada tasksets
+  # for the RTE Platform (Ravenscar)
+  if config.GENERATE_TASKSET_RTE == True:
+    utils.save_taskset_as_Ada(experiment_id)
+  
   # for the RTEMS/XM Platform
-  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
-  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  if config.GENERATE_TASKSET_TSP == True:
+    print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+    RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   
   first_test_bar.finish()
   create_chart(res_global, 'Utilization', 'Schedulable Tasksets', 'result_1.png')
@@ -257,14 +258,15 @@ def run_second_test ():
     second_test_bar.next()
 
   utils.beautify_XML_Files(experiment_id)
-  # Uncomment the following line if you want to generate Ada tasksets
+  
   # for the RTE Platform (Ravenscar)
-  # utils.save_taskset_as_Ada(experiment_id)
-
-  # Uncomment the following lines if you want to generate Ada tasksets
+  if config.GENERATE_TASKSET_RTE == True:
+    utils.save_taskset_as_Ada(experiment_id)
+  
   # for the RTEMS/XM Platform
-  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
-  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  if config.GENERATE_TASKSET_TSP == True:
+    print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+    RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   
   second_test_bar.finish()
   create_chart(res_global, 'Criticality Factor', 'Weighted Schedulability', 'result_2.png')
@@ -292,14 +294,15 @@ def run_third_test ():
     third_test_bar.next()
   
   utils.beautify_XML_Files(experiment_id)
-  # Uncomment the following line if you want to generate Ada tasksets
-  # for the RTE Platform (Ravenscar)
-  # utils.save_taskset_as_Ada(experiment_id)
 
-  # Uncomment the following lines if you want to generate Ada tasksets
+  # for the RTE Platform (Ravenscar)
+  if config.GENERATE_TASKSET_RTE == True:
+    utils.save_taskset_as_Ada(experiment_id)
+  
   # for the RTEMS/XM Platform
-  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
-  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  if config.GENERATE_TASKSET_TSP == True:
+    print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+    RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
   
   third_test_bar.finish()
   create_chart(res_global, 'Proportion of HI-crit tasks', 'Weighted Schedulability', 'result_3.png')
@@ -320,14 +323,15 @@ def run_fourth_test ():
     fourth_test_bar.next()
   
   utils.beautify_XML_Files(experiment_id)
-  # Uncomment the following line if you want to generate Ada tasksets
-  # for the RTE Platform (Ravenscar)
-  # utils.save_taskset_as_Ada(experiment_id)
 
-  # Uncomment the following lines if you want to generate Ada tasksets
+  # for the RTE Platform (Ravenscar)
+  if config.GENERATE_TASKSET_RTE == True:
+    utils.save_taskset_as_Ada(experiment_id)
+  
   # for the RTEMS/XM Platform
-  # print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
-  # RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
+  if config.GENERATE_TASKSET_TSP == True:
+    print ("Saving Ada tasksets for the RTEMS/XM Platform on your file system. This may require a lot of time...") 
+    RTA_partitioned_scheduling_IWRR.save_taskset_as_Ada_On_RTEMS_On_XM (experiment_id)
 
   fourth_test_bar.finish()
   create_chart(res_global, 'Taskset size', 'Weighted Schedulability', 'result_4')
@@ -449,6 +453,13 @@ def parse_options():
   config.TASK_MIN_NOMINAL_UTILIZATION = float(file_conf['Per-tasks utilization range']['lower_bound'])
   config.TASK_MAX_NOMINAL_UTILIZATION = float(file_conf['Per-tasks utilization range']['upper_bound'])
 
+  config.TASKSETS_LANGUAGE = (str(file_conf['Tasksets for real target']['Language']))
+  config.GENERATE_TASKSET_RTE = True if (str(file_conf['Tasksets for real target']['rte_platform']) == "yes") else False
+  config.GENERATE_TASKSET_TSP = True if (str(file_conf['Tasksets for real target']['tsp_platform']) == "yes") else False
+
+
+  if config.TASKSETS_LANGUAGE not in ['Ada']:
+    raise Exception(config.TASKSETS_LANGUAGE + ": language not supported.")
 
 ######### START ###########
 
